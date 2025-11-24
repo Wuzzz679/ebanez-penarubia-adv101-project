@@ -1,0 +1,152 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import styles from "../styles/home.module.css";
+
+export default function Home() {
+  const router = useRouter();
+
+  const trendingShoes = [
+    { slug: "nike-dunk-low", name: "Nike Dunk Low", price: 7894, img: "/nike.avif" },
+    { slug: "air-jordan-1-low", name: "Air Jordan 1 Low", price: 6500, img: "/blurjordan.png" },
+    { slug: "palermo-leather-sneakers", name: "Palermo Leather Sneakers Unisex", price: 4576, img: "/palermo.avif" },
+    { slug: "chuck-taylor-all-star", name: "Chuck Taylor All Star", price: 3600, img: "/chuck.webp" },
+    { slug: "adizero-evo-sl", name: "Adizero Evo Sl Men's Shoes", price: 4200, img: "/adizero.webp" },
+    { slug: "new-balance", name: "740 unisex sneakers shoes", price: 4890, img: "/nb.webp" },
+    { slug: "air-jordan-4-retro", name: "Air Jordan 4 Retro Men's Basketball Shoes", price: 5000, img: "/retro.avif" },
+  ];
+
+  const categories = [
+    { name: "MEN", slug: "men", img: "/men.jpg" },
+    { name: "WOMEN", slug: "women", img: "/women.jpg" },
+    { name: "KIDS", slug: "kids", img: "/kids.jpg" },
+    { name: "STYLE", slug: "style", img: "/style.jpg" },
+  ];
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(4);
+  const [cartCount, setCartCount] = useState(0);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const updateItemsPerPage = () => {
+      if (window.innerWidth <= 600) setItemsPerPage(1);
+      else if (window.innerWidth <= 1024) setItemsPerPage(2);
+      else setItemsPerPage(4);
+    };
+    updateItemsPerPage();
+    window.addEventListener("resize", updateItemsPerPage);
+    return () => window.removeEventListener("resize", updateItemsPerPage);
+  }, []);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(storedUser);
+      const userCart = JSON.parse(localStorage.getItem(`cart_${storedUser}`)) || [];
+      setCartCount(userCart.length);
+    }
+  }, []);
+
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      if (user) {
+        const updatedCart = JSON.parse(localStorage.getItem(`cart_${user}`)) || [];
+        setCartCount(updatedCart.length);
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [user]);
+
+  const handleNext = () => {
+    setCurrentIndex((prev) =>
+      prev + itemsPerPage < trendingShoes.length ? prev + itemsPerPage : 0
+    );
+  };
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) =>
+      prev - itemsPerPage >= 0 ? prev - itemsPerPage : trendingShoes.length - itemsPerPage
+    );
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    setUser(null);
+    router.push("/");
+  };
+
+  return (
+    <div className={styles.container}>
+      <nav className={styles.navbar}>
+        <div className={styles.logo}>StreetKicks</div>
+        <ul className={styles.navLinks}>
+          <li><a href="#trending">Trending</a></li>
+          <li><a href="#categories">Categories</a></li>
+          <li><a onClick={() => router.push("/myorders")} style={{ cursor: "pointer" }}>My Orders</a></li>
+        </ul>
+        <div className={styles.navButtons}>
+          {user && (
+            <>
+              <span className={styles.userName}>{user}</span>
+              <button className={styles.logoutBtn} onClick={handleLogout}>Log Out</button>
+            </>
+          )}
+          <button className={styles.cartBtn} onClick={() => router.push("/cart")}>
+            Cart ({cartCount})
+          </button>
+        </div>
+      </nav>
+
+      <header className={styles.hero}>
+        <div className={styles.heroOverlay}>
+          <h1>StreetKicks</h1>
+          <p>Step Up Your Sneaker Game</p>
+          <a href="#trending" className={styles.heroButton}>Shop Now</a>
+        </div>
+      </header>
+
+      <section className={styles.trending} id="trending">
+        <h2>Trending Sneakers</h2>
+        <div className={styles.carouselWrapper}>
+          <div
+            className={styles.trendingGrid}
+            style={{
+              transform: `translateX(-${itemsPerPage ? (100 / trendingShoes.length) * currentIndex : 0}%)`,
+              width: `${itemsPerPage ? (100 / itemsPerPage) * trendingShoes.length : trendingShoes.length * 100}%`,
+            }}
+          >
+            {trendingShoes.map((shoe, index) => (
+              <div key={index} className={styles.card} onClick={() => router.push(`/shoe/${shoe.slug}`)}>
+                <img src={shoe.img} alt={shoe.name} />
+                <div className={styles.cardInfo}>
+                  <p className={styles.name}>{shoe.name}</p>
+                  <p className={styles.price}>₱{shoe.price.toLocaleString()}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button className={styles.prevArrow} onClick={handlePrev}>&#10094;</button>
+          <button className={styles.nextArrow} onClick={handleNext}>&#10095;</button>
+        </div>
+      </section>
+
+      <section className={styles.categories} id="categories">
+        <h2>Shop by Category</h2>
+        <div className={styles.categoryGrid}>
+          {categories.map((cat, index) => (
+            <div key={index} className={styles.categoryCard} onClick={() => router.push(`/category/${cat.slug}`)}>
+              <img src={cat.img} alt={cat.name} />
+              <p>{cat.name}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}

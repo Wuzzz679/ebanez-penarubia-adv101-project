@@ -1,0 +1,93 @@
+.pageContainer {
+  max-width: 1200px;
+  margin: auto;
+  padding: 50px 20px;
+  font-family: "Poppins", sans-serif;
+  color: #fff;
+}
+
+.header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.header h1 {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: #00f5d4;
+  text-shadow: 0 0 15px #00f5d4, 0 0 30px rgba(0, 255, 200, 0.4);
+}
+
+.ordersGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.orderItem {
+  display: flex;
+  gap: 20px;
+  background: rgba(15, 15, 15, 0.75);
+  border-radius: 20px;
+  padding: 20px;
+  border: 1px solid rgba(0, 255, 200, 0.25);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 0 20px rgba(0, 255, 200, 0.1),
+    0 0 40px rgba(0, 255, 200, 0.05),
+    inset 0 0 30px rgba(0, 255, 200, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  align-items: center;
+}
+
+.orderItem:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 0 25px rgba(0, 255, 200, 0.15),
+    0 0 60px rgba(0, 255, 200, 0.06),
+    inset 0 0 40px rgba(0, 255, 200, 0.07);
+}
+
+.orderItem img {
+  width: 180px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
+.itemInfo {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.itemInfo h2 {
+  font-size: 1.4rem;
+  color: #00f5d4;
+  text-shadow: 0 0 10px #00f5d4, 0 0 20px rgba(0, 255, 200, 0.3);
+}
+
+.itemInfo p {
+  font-size: 1.1rem;
+  color: #eaeaea;
+}
+
+.cancelBtn {
+  padding: 10px 20px;
+  border-radius: 12px;
+  background: rgba(255, 0, 0, 0.8);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  align-self: flex-start;
+}
+
+.cancelBtn:hover {
+  background: #ff4c4c;
+  transform: scale(1.03);
+}

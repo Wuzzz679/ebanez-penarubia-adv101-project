@@ -1,0 +1,110 @@
+.contactContainer {
+  width: 100%;
+  max-width: 900px;
+  margin: auto;
+  min-height: 100vh;
+  padding: 50px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contactCard {
+  background: rgba(15, 15, 15, 0.75);
+  border-radius: 20px;
+  padding: 55px;
+  border: 1px solid rgba(0, 255, 200, 0.25);
+  backdrop-filter: blur(12px);
+  box-shadow: 
+    0 0 20px rgba(0, 255, 200, 0.1),
+    0 0 40px rgba(0, 255, 200, 0.05),
+    inset 0 0 30px rgba(0, 255, 200, 0.05);
+  animation: fadeIn 0.8s ease-out;
+  transition: 0.3s ease;
+}
+
+.contactCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 0 25px rgba(0, 255, 200, 0.15),
+    0 0 60px rgba(0, 255, 200, 0.06),
+    inset 0 0 40px rgba(0, 255, 200, 0.07);
+}
+
+.contactCard h1 {
+  font-size: 3.2rem;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 12px;
+  color: #00f5d4;
+  text-shadow: 0 0 15px #00f5d4, 0 0 30px rgba(0, 255, 200, 0.4);
+  letter-spacing: 3px;
+}
+
+.contactCard .tagline {
+  text-align: center;
+  font-size: 1.25rem;
+  color: #bfbfbf;
+  margin-bottom: 35px;
+  letter-spacing: 1px;
+  opacity: 0.85;
+}
+
+.contactCard form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.contactCard label {
+  font-weight: 600;
+  color: #00f5d4;
+  margin-bottom: 5px;
+}
+
+.contactCard input,
+.contactCard textarea {
+  padding: 12px 15px;
+  border-radius: 12px;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  backdrop-filter: blur(6px);
+  transition: all 0.3s ease;
+}
+
+.contactCard input:focus,
+.contactCard textarea:focus {
+  background: rgba(0, 245, 212, 0.1);
+  box-shadow: 0 0 10px #00f5d4, 0 0 20px rgba(0, 245, 212, 0.3);
+}
+
+.contactCard button {
+  padding: 15px 25px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  background: linear-gradient(90deg, #00f5d4, #00c2ff);
+  color: #000;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px #00f5d4, 0 0 20px rgba(0, 245, 212, 0.5);
+}
+
+.contactCard button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px #00f5d4, 0 0 40px rgba(0, 245, 212, 0.7);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slowRotate {
+  0% { transform: rotate(0deg);}
+  100% { transform: rotate(360deg);}
+}
