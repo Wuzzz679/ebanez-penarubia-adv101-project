@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import styles from "../styles/home.module.css";
+import Link from "next/link";
 
 export default function Home() {
   const router = useRouter();
@@ -14,7 +15,7 @@ export default function Home() {
     { slug: "chuck-taylor-all-star", name: "Chuck Taylor All Star", price: 3600, img: "/chuck.webp" },
     { slug: "adizero-evo-sl", name: "Adizero Evo Sl Men's Shoes", price: 4200, img: "/adizero.webp" },
     { slug: "new-balance", name: "740 unisex sneakers shoes", price: 4890, img: "/nb.webp" },
-    { slug: "air-jordan-4-retro", name: "Air Jordan 4 Retro Men's Basketball Shoes", price: 5000, img: "/retro.avif" },
+    { slug: "air-jordan-4-retro", name: "Air Jordan 4 Retro Men's Basketball Shoes", price: 5000, img: "/menairjordan1.webp" },
   ];
 
   const categories = [
@@ -49,18 +50,6 @@ export default function Home() {
     }
   }, []);
 
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-      if (user) {
-        const updatedCart = JSON.parse(localStorage.getItem(`cart_${user}`)) || [];
-        setCartCount(updatedCart.length);
-      }
-    };
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, [user]);
-
   const handleNext = () => {
     setCurrentIndex((prev) =>
       prev + itemsPerPage < trendingShoes.length ? prev + itemsPerPage : 0
@@ -88,6 +77,7 @@ export default function Home() {
           <li><a href="#trending">Trending</a></li>
           <li><a href="#categories">Categories</a></li>
           <li><a onClick={() => router.push("/myorders")} style={{ cursor: "pointer" }}>My Orders</a></li>
+
         </ul>
         <div className={styles.navButtons}>
           {user && (
@@ -125,7 +115,7 @@ export default function Home() {
                 <img src={shoe.img} alt={shoe.name} />
                 <div className={styles.cardInfo}>
                   <p className={styles.name}>{shoe.name}</p>
-                  <p className={styles.price}>₱{shoe.price.toLocaleString()}</p>
+                  <p>₱{shoe.price.toLocaleString()}</p>
                 </div>
               </div>
             ))}
@@ -147,6 +137,18 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {}
+      <footer className={styles.footer} id="contact">
+        <div className={styles.footerContent}>
+          <ul className={styles.footerLinks}>
+            <li><Link href="/contactus">Customer Service</Link></li>
+            <li><Link href="/aboutus">About Us</Link></li>
+            <li><Link href="/careers">Careers</Link></li>
+            <li><Link href="/newsletter">Newsletter</Link></li>
+          </ul>
+        </div>
+      </footer>
     </div>
   );
 }

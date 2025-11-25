@@ -3,20 +3,11 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import styles from "../../styles/category.module.css";
 
-const allShoes = [
-  { slug: "nike-dunk-low", name: "Nike Dunk Low", price: "₱7,894", img: "/nike.avif", category: "MEN" },
-  { slug: "air-jordan-1-low", name: "Air Jordan 1 Low", price: "₱6,500", img: "/blurjordan.png", category: "MEN" },
-  { slug: "palermo-leather-sneakers", name: "Palermo Leather Sneakers", price: "₱4,576", img: "/palermo.avif", category: "WOMEN" },
-  { slug: "chuck-taylor-all-star", name: "Chuck Taylor All Star", price: "₱3,600", img: "/chuck.webp", category: "KIDS" },
-  { slug: "adizero-evo-sl", name: "Adizero Evo Sl", price: "₱4,200", img: "/adizero.webp", category: "MEN" },
-  { slug: "new-balance", name: "740 Sneakers", price: "₱4,890", img: "/nb.webp", category: "WOMEN" },
-  { slug: "air-jordan-4-retro", name: "Air Jordan 4 Retro", price: "₱5,000", img: "/retro.avif", category: "MEN" },
-];
-
 export default function CategoryPage() {
   const router = useRouter();
   const { slug } = router.query;
 
+  const [categoryShoes, setCategoryShoes] = useState([]);
   const [cartCount, setCartCount] = useState(0);
   const [selectedSizes, setSelectedSizes] = useState({});
 
@@ -27,19 +18,23 @@ export default function CategoryPage() {
     setCartCount(cart.length);
   }, []);
 
-  if (!slug) return <p>Loading...</p>;
+  useEffect(() => {
+    if (!slug) return;
 
-  const categoryShoes = allShoes.filter(
-    (shoe) => shoe.category.toLowerCase() === slug.toLowerCase()
-  );
+    fetch(`/api/products?category=${slug}`)
+      .then(res => res.json())
+      .then(data => setCategoryShoes(data.products))
+      .catch(err => console.error(err));
+  }, [slug]);
 
   const handleSizeChange = (slug, value) => {
     setSelectedSizes(prev => ({ ...prev, [slug]: value }));
   };
 
-  const handleAddToCart = (shoe) => {
+  const handleAddToCart = async (shoe) => {
     const username = localStorage.getItem("user");
-    if (!username) {
+    const userId = localStorage.getItem("user_id");
+    if (!username || !userId) {
       alert("You must login first.");
       return;
     }
@@ -50,22 +45,27 @@ export default function CategoryPage() {
       return;
     }
 
-    const cartKey = `cart_${username}`;
-    const cart = JSON.parse(localStorage.getItem(cartKey)) || [];
-
-    cart.push({
-      ...shoe,
-      size,
-      quantity: 1,
-      image: shoe.img,
-      title: shoe.name,
-      price: Number(shoe.price.replace(/[₱,]/g, "")),
+    const res = await fetch("/api/cart/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: userId,
+        product_id: shoe.id,
+        size,
+        quantity: 1
+      })
     });
 
-    localStorage.setItem(cartKey, JSON.stringify(cart));
-    setCartCount(cart.length);
-    alert(`Added ${shoe.name} (Size ${size}) to cart`);
+    const data = await res.json();
+    if (res.ok) {
+      setCartCount(cartCount + 1);
+      alert(`Added ${shoe.name} (Size ${size}) to cart`);
+    } else {
+      alert(data.error || "Failed to add to cart");
+    }
   };
+
+  if (!slug) return <p>Loading...</p>;
 
   return (
     <div className={styles.pageContainer}>
@@ -78,9 +78,9 @@ export default function CategoryPage() {
         {categoryShoes.map((shoe, index) => (
           <div key={index} className={styles.productCard}>
             <Link href={`/shoe/${shoe.slug}`} className={styles.linkReset}>
-              <img src={shoe.img} alt={shoe.name} />
+              <img src={shoe.image} alt={shoe.name} />
               <h2>{shoe.name}</h2>
-              <p>{shoe.price}</p>
+              <p>₱{Number(shoe.price).toLocaleString()}</p>
             </Link>
 
             <select

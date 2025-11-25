@@ -1,12 +1,7 @@
-import mysql from "mysql2/promise";
-import bcrypt from "bcryptjs";
 
-const db = mysql.createPool({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "streetkicks",
-});
+import bcrypt from "bcryptjs";
+import db from "../../lib/db";
+
 
 export default async function handler(req, res) {
   if (req.method !== "POST")
