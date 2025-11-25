@@ -1,4 +1,3 @@
-
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import db from "../../lib/db"; 
@@ -29,7 +28,8 @@ export default async function handler(req, res) {
     return res.status(200).json({ 
       message: "Login successful", 
       token, 
-      username: user.username 
+      username: user.username,
+      email: user.email  
     });
   } catch (err) {
     return res.status(500).json({ message: err.message });

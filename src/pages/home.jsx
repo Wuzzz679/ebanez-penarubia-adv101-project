@@ -29,6 +29,7 @@ export default function Home() {
   const [itemsPerPage, setItemsPerPage] = useState(4);
   const [cartCount, setCartCount] = useState(0);
   const [user, setUser] = useState(null);
+  const [username, setUsername] = useState("");
 
   useEffect(() => {
     const updateItemsPerPage = () => {
@@ -43,8 +44,12 @@ export default function Home() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
+    const storedUsername = localStorage.getItem("username");
+    
     if (storedUser) {
       setUser(storedUser);
+      setUsername(storedUsername); // Use the actual stored username
+      
       const userCart = JSON.parse(localStorage.getItem(`cart_${storedUser}`)) || [];
       setCartCount(userCart.length);
     }
@@ -64,8 +69,10 @@ export default function Home() {
 
   const handleLogout = () => {
     localStorage.removeItem("user");
+    localStorage.removeItem("username");
     localStorage.removeItem("token");
     setUser(null);
+    setUsername("");
     router.push("/");
   };
 
@@ -77,12 +84,11 @@ export default function Home() {
           <li><a href="#trending">Trending</a></li>
           <li><a href="#categories">Categories</a></li>
           <li><a onClick={() => router.push("/myorders")} style={{ cursor: "pointer" }}>My Orders</a></li>
-
         </ul>
         <div className={styles.navButtons}>
           {user && (
             <>
-              <span className={styles.userName}>{user}</span>
+              <span className={styles.userName}>{username}</span>
               <button className={styles.logoutBtn} onClick={handleLogout}>Log Out</button>
             </>
           )}
@@ -138,7 +144,6 @@ export default function Home() {
         </div>
       </section>
 
-      {}
       <footer className={styles.footer} id="contact">
         <div className={styles.footerContent}>
           <ul className={styles.footerLinks}>

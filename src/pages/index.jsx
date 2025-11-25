@@ -35,7 +35,8 @@ export default function AuthPage() {
         setPassword("");
       } else {
         localStorage.setItem("token", data.token);
-        localStorage.setItem("user", data.username); 
+        localStorage.setItem("user", data.email); // Store email for database operations
+        localStorage.setItem("username", data.username); // Store actual username for display
         router.push("/home");
       }
     } catch (err) {

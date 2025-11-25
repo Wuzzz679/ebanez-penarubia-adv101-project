@@ -2,17 +2,67 @@ import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import styles from "../../styles/shoe.module.css";
 
+const shoesData = [
+  {
+    slug: "nike-dunk-low",
+    name: "Nike Dunk Low",
+    price: "₱7,894",
+    images: ["/nike.avif", "/nike-alt1.avif", "/nike-alt2.avif"],
+    description: "Classic Nike Dunk Low with street-ready style.",
+  },
+  {
+    slug: "air-jordan-1-low",
+    name: "Air Jordan 1 Low",
+    price: "₱6,500",
+    images: ["/blurjordan.png", "/jordan-alt1.png", "/jordan-alt2.avif"],
+    description: "Clean and iconic Air Jordan 1 Low, perfect for any outfit.",
+  },
+  {
+    slug: "palermo-leather-sneakers",
+    name: "Palermo Leather Sneakers Unisex",
+    price: "₱4,576",
+    images: ["/palermo.avif", "/palermo-alt1.avif", "/palermo-alt2.avif"],
+    description: "Premium leather sneakers suitable for men and women.",
+  },
+  {
+    slug: "chuck-taylor-all-star",  
+    name: "Chuck Taylor All Star",
+    price: "₱3,600", 
+    images: ["/chuck.webp","/chuck-alt1.jpg","/chuck-alt2.jpg"],
+    description: "Timeless Chuck Taylor All Star sneakers for everyday wear.",
+  },
+  {
+    slug: "adizero-evo-sl", 
+    name: "Adizero Evo Sl Men's Shoes", 
+    price: "₱4,200", 
+    images: ["/adizero.webp","/adizero-alt1.webp","/adizero-alt2.webp"],
+    description: "Lightweight and responsive Adizero Evo Sl for runners.",
+  },
+  {
+    slug: "new-balance", 
+    name: "740 unisex sneakers shoes", 
+    price: "₱4,890", 
+    images: ["/nb.webp","/nb-alt1.webp","/nb-alt2.webp"], 
+    description: "Comfortable and stylish New Balance sneakers."
+  },
+  {
+    slug: "air-jordan-4-retro", 
+    name: "Air Jordan 4 Retro Men's Basketball Shoes", 
+    price: "₱5,000", 
+    images: ["/retro.avif", "/retro-alt1.avif", "/retro-alt2.avif"],
+    description: "Classic Air Jordan 4 Retro for basketball enthusiasts."
+  }
+];
+
 export default function ShoePage() {
   const router = useRouter();
   const { slug } = router.query;
 
-  const [shoe, setShoe] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState(null);
   const [cartCount, setCartCount] = useState(0);
-  const [user, setUser] = useState(null);
 
-  const sizes = [7, 7.5, 8, 8.5, 9, 9.5, 10];
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -23,44 +73,32 @@ export default function ShoePage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (!slug) return;
-
-    fetch(`/api/products/${slug}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.product) setShoe(data.product);
-      })
-      .catch(err => console.error(err));
-  }, [slug]);
-
   if (!slug) return <p>Loading...</p>;
+
+  const shoe = shoesData.find((s) => s.slug === slug);
   if (!shoe) return <p>Shoe not found.</p>;
 
-  const handleAddToCart = async () => {
+  const sizes = [7, 7.5, 8, 8.5, 9, 9.5, 10];
+
+  const handleAddToCart = () => {
     if (!user) return alert("Please login first!");
     if (!selectedSize) return alert("Please select a size!");
 
-    const userId = localStorage.getItem("user_id");
+    const cartKey = `cart_${user}`;
+    const cart = JSON.parse(localStorage.getItem(cartKey)) || [];
 
-    const res = await fetch("/api/cart/add", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: userId,
-        product_id: shoe.id,
-        size: selectedSize,
-        quantity: 1
-      })
-    });
+    const item = {
+      title: shoe.name,
+      price: parseInt(shoe.price.replace(/[₱,]/g, "")),
+      quantity: 1,
+      size: selectedSize,
+      image: shoe.images[selectedImage],
+    };
 
-    const data = await res.json();
-    if (res.ok) {
-      setCartCount(cartCount + 1);
-      alert(`Added ${shoe.name} (Size ${selectedSize}) to your cart`);
-    } else {
-      alert(data.error || "Failed to add to cart");
-    }
+    cart.push(item);
+    localStorage.setItem(cartKey, JSON.stringify(cart));
+    setCartCount(cart.length);
+    alert(`Added ${item.title} (Size ${item.size}) to your cart`);
   };
 
   return (
@@ -94,7 +132,7 @@ export default function ShoePage() {
 
         <div className={styles.infoSection}>
           <h2>{shoe.name}</h2>
-          <p className={styles.price}>₱{Number(shoe.price).toLocaleString()}</p>
+          <p className={styles.price}>{shoe.price}</p>
           <p className={styles.description}>{shoe.description}</p>
 
           <div className={styles.sizes}>
