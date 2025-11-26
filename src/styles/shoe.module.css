@@ -214,3 +214,8 @@ body::before {
   0% { transform: rotate(0deg);}
   100% { transform: rotate(360deg);}
 }
+.reviewsSection {
+  margin-top: 4rem;
+  padding: 2rem 0;
+  border-top: 2px solid #00f5d4;
+}

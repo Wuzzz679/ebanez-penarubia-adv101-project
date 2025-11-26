@@ -13,6 +13,13 @@ export default function Newsletter() {
 
         <form className={styles.newsletterForm}>
           <label htmlFor="name">Full Name</label>
+
+
+
+
+
+
+          
           <input type="text" id="name" placeholder="Your name" required />
 
           <label htmlFor="email">Email Address</label>

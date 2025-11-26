@@ -7,6 +7,7 @@ export default function CartPage() {
   const [cart, setCart] = useState([]);
   const [total, setTotal] = useState(0);
   const [user, setUser] = useState(null);
+  const [username, setUsername] = useState(""); // Add username state
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [showCheckoutForm, setShowCheckoutForm] = useState(false);
   const [checkoutData, setCheckoutData] = useState({
@@ -18,9 +19,13 @@ export default function CartPage() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
+    const storedUsername = localStorage.getItem("username"); // Get username from localStorage
+    
     if (!storedUser) return; 
 
     setUser(storedUser);
+    setUsername(storedUsername || storedUser); // Use username if available, fallback to email
+    
     const storedCart = JSON.parse(localStorage.getItem(`cart_${storedUser}`)) || [];
     setCart(storedCart);
   }, []);
@@ -133,10 +138,18 @@ export default function CartPage() {
     });
   };
 
+  // Function to get display name (username or email)
+  const getDisplayName = () => {
+    if (username && username !== user) {
+      return username; // Return username if available and different from email
+    }
+    return user; // Fallback to email
+  };
+
   return (
     <div className={styles.pageContainer}>
       <header className={styles.header}>
-        <h1>{user ? `${user}'s Cart` : "Your Cart"}</h1>
+        <h1>{user ? `${getDisplayName()}'s Cart` : "Your Cart"}</h1>
       </header>
 
       {cart.length === 0 ? (

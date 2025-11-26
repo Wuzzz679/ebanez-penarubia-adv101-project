@@ -7,17 +7,21 @@ import styles from "../styles/myorders.module.css";
 export default function MyOrders() {
   const [orders, setOrders] = useState([]);
   const [user, setUser] = useState(null);
+  const [username, setUsername] = useState(""); // Add username state
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
+    const storedUsername = localStorage.getItem("username"); // Get username
+    
     if (!storedUser) {
       router.push("/login");
       return;
     }
 
     setUser(storedUser);
+    setUsername(storedUsername || storedUser); // Use username if available
     fetchOrders(storedUser);
   }, []);
 
@@ -84,11 +88,19 @@ export default function MyOrders() {
     return paymentMethods[method] || method;
   };
 
+  // Function to get display name (username or email)
+  const getDisplayName = () => {
+    if (username && username !== user) {
+      return username; // Return username if available and different from email
+    }
+    return user; // Fallback to email
+  };
+
   if (loading) {
     return (
       <div className={styles.pageContainer}>
         <header className={styles.header}>
-          <h1>{user ? `${user}'s Orders` : "Your Orders"}</h1>
+          <h1>{user ? `${getDisplayName()}'s Orders` : "Your Orders"}</h1>
         </header>
         <p className={styles.empty}>Loading your orders...</p>
       </div>
@@ -98,7 +110,7 @@ export default function MyOrders() {
   return (
     <div className={styles.pageContainer}>
       <header className={styles.header}>
-        <h1>{user ? `${user}'s Orders` : "Your Orders"}</h1>
+        <h1>{user ? `${getDisplayName()}'s Orders` : "Your Orders"}</h1>
       </header>
 
       {orders.length === 0 ? (
@@ -146,7 +158,7 @@ export default function MyOrders() {
                   </p>
                 </div>
 
-                {/* Cancel Button */}
+                {}
                 {order.status === 'pending' && (
                   <button 
                     className={styles.cancelBtn} 

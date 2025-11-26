@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import styles from "../../styles/shoe.module.css";
+import ProductReviews from "../productreview";
 
 const shoesData = [
   {
@@ -9,6 +10,7 @@ const shoesData = [
     price: "₱7,894",
     images: ["/nike.avif", "/nike-alt1.avif", "/nike-alt2.avif"],
     description: "Classic Nike Dunk Low with street-ready style.",
+    id: 1 // Added ID for reviews
   },
   {
     slug: "air-jordan-1-low",
@@ -16,6 +18,7 @@ const shoesData = [
     price: "₱6,500",
     images: ["/blurjordan.png", "/jordan-alt1.png", "/jordan-alt2.avif"],
     description: "Clean and iconic Air Jordan 1 Low, perfect for any outfit.",
+    id: 2
   },
   {
     slug: "palermo-leather-sneakers",
@@ -23,6 +26,7 @@ const shoesData = [
     price: "₱4,576",
     images: ["/palermo.avif", "/palermo-alt1.avif", "/palermo-alt2.avif"],
     description: "Premium leather sneakers suitable for men and women.",
+    id: 3
   },
   {
     slug: "chuck-taylor-all-star",  
@@ -30,6 +34,7 @@ const shoesData = [
     price: "₱3,600", 
     images: ["/chuck.webp","/chuck-alt1.jpg","/chuck-alt2.jpg"],
     description: "Timeless Chuck Taylor All Star sneakers for everyday wear.",
+    id: 4
   },
   {
     slug: "adizero-evo-sl", 
@@ -37,20 +42,23 @@ const shoesData = [
     price: "₱4,200", 
     images: ["/adizero.webp","/adizero-alt1.webp","/adizero-alt2.webp"],
     description: "Lightweight and responsive Adizero Evo Sl for runners.",
+    id: 5
   },
   {
     slug: "new-balance", 
     name: "740 unisex sneakers shoes", 
     price: "₱4,890", 
     images: ["/nb.webp","/nb-alt1.webp","/nb-alt2.webp"], 
-    description: "Comfortable and stylish New Balance sneakers."
+    description: "Comfortable and stylish New Balance sneakers.",
+    id: 6
   },
   {
     slug: "air-jordan-4-retro", 
     name: "Air Jordan 4 Retro Men's Basketball Shoes", 
     price: "₱5,000", 
     images: ["/retro.avif", "/retro-alt1.avif", "/retro-alt2.avif"],
-    description: "Classic Air Jordan 4 Retro for basketball enthusiasts."
+    description: "Classic Air Jordan 4 Retro for basketball enthusiasts.",
+    id: 7
   }
 ];
 
@@ -61,7 +69,6 @@ export default function ShoePage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState(null);
   const [cartCount, setCartCount] = useState(0);
-
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -152,6 +159,11 @@ export default function ShoePage() {
           </button>
         </div>
       </main>
+
+      {}
+      <section className={styles.reviewsSection}>
+        <ProductReviews productId={shoe.id} />
+      </section>
     </div>
   );
 }
