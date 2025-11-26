@@ -241,15 +241,7 @@ export default function Home() {
                    
                   </div>
                   
-                  <button 
-                           className={styles.viewReviewsBtn}
-                        onClick={(e) => {
-                         e.stopPropagation();
-                        router.push(`/productreview`);
-                                }}
->
-                          View Reviews
-                  </button>
+               
                 </div>
               </div>
             ))}
@@ -293,12 +285,7 @@ export default function Home() {
           ))}
         </div>
         
-        <button 
-          className={styles.allReviewsBtn}
-          onClick={() => router.push("/productreview")}
-        >
-          Read All Reviews
-        </button>
+       
       </section>
 
       <footer className={styles.footer} id="contact">

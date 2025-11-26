@@ -10,7 +10,7 @@ const shoesData = [
     price: "₱7,894",
     images: ["/nike.avif", "/nike-alt1.avif", "/nike-alt2.avif"],
     description: "Classic Nike Dunk Low with street-ready style.",
-    id: 1 // Added ID for reviews
+    id: 1 
   },
   {
     slug: "air-jordan-1-low",
