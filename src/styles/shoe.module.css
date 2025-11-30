@@ -219,3 +219,67 @@ body::before {
   padding: 2rem 0;
   border-top: 2px solid #00f5d4;
 }
+/* Add to your existing shoe.module.css */
+
+.navButtons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.wishlistBtn {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  color: #ff6b6b;
+  border: 1px solid #ff6b6b;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.wishlistBtn:hover {
+  background: #ff6b6b;
+  color: white;
+  transform: scale(1.05);
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.addToWishlistBtn {
+  padding: 12px 24px;
+  background: transparent;
+  color: #ff6b6b;
+  border: 2px solid #ff6b6b;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+.addToWishlistBtn:hover {
+  background: #ff6b6b;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+.addToCartBtn {
+  flex: 2; /* Make Add to Cart button wider */
+}
+
+/* Make the header title clickable */
+.header h1 {
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.header h1:hover {
+  color: #00f5d4;
+}

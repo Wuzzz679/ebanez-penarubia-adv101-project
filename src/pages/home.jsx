@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import styles from "../styles/home.module.css";
 import Link from "next/link";
+import { addToWishlist } from "../utils/wishlistUtils";
 
 export default function Home() {
   const router = useRouter();
@@ -189,6 +190,7 @@ export default function Home() {
           <li><a onClick={() => router.push("/myorders")} style={{ cursor: "pointer" }}>My Orders</a></li>
           <li><a onClick={() => router.push("/profile")} style={{ cursor: "pointer" }}>Profile</a></li>
               <li><a onClick={() => router.push("/reviews")} style={{ cursor: "pointer" }}>My Reviews</a></li>
+               <li><a onClick={() => router.push("/wishlist")} style={{ cursor: "pointer" }}>Wishlist</a></li>
          
         </ul>
         <div className={styles.navButtons}>

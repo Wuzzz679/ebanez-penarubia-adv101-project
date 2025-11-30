@@ -65,21 +65,24 @@ initializeTables().catch(error => {
   console.error('Failed to initialize database:', error.message);
 });
 
-// Add order to database
+// Add order to database - FIXED VERSION
 async function addOrder(orderData) {
   try {
-    const { 
-      user_email, 
-      product_title, 
-      product_image, 
-      size, 
-      price, 
-      quantity,
-      payment_method,
-      customer_address,
-      customer_name,
-      customer_phone
-    } = orderData;
+    // Ensure no undefined values - convert to empty strings or defaults
+    const safeOrderData = {
+      user_email: orderData.user_email || '',
+      product_title: orderData.product_title || 'Unknown Product',
+      product_image: orderData.product_image || '',
+      size: orderData.size || 'Not specified',
+      price: orderData.price ? parseFloat(orderData.price) : 0,
+      quantity: orderData.quantity ? parseInt(orderData.quantity) : 1,
+      payment_method: orderData.payment_method || 'cash',
+      customer_address: orderData.customer_address || '',
+      customer_name: orderData.customer_name || '',
+      customer_phone: orderData.customer_phone || ''
+    };
+    
+    console.log('🔄 Adding order to database with safe data:', safeOrderData);
     
     const query = `
       INSERT INTO orders 
@@ -87,25 +90,17 @@ async function addOrder(orderData) {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     
-    console.log('🔄 Adding order to database:', { 
-      user_email, 
-      product_title, 
-      quantity,
-      customer_name,
-      payment_method
-    });
-    
     const [result] = await db.execute(query, [
-      user_email, 
-      product_title, 
-      product_image, 
-      size, 
-      price, 
-      quantity,
-      payment_method || 'cash',
-      customer_address,
-      customer_name,
-      customer_phone
+      safeOrderData.user_email, 
+      safeOrderData.product_title, 
+      safeOrderData.product_image, 
+      safeOrderData.size, 
+      safeOrderData.price, 
+      safeOrderData.quantity,
+      safeOrderData.payment_method,
+      safeOrderData.customer_address,
+      safeOrderData.customer_name,
+      safeOrderData.customer_phone
     ]);
     
     console.log('✅ Order added successfully, ID:', result.insertId);
@@ -113,6 +108,11 @@ async function addOrder(orderData) {
     return { id: result.insertId };
   } catch (error) {
     console.error('❌ Error adding order to database:', error.message);
+    console.error('Error details:', {
+      code: error.code,
+      errno: error.errno,
+      sqlMessage: error.sqlMessage
+    });
     throw error;
   }
 }
@@ -168,12 +168,13 @@ async function updateOrderStatus(orderId, status) {
 // Contact functions
 async function createContact(contactData) {
   try {
-    const { 
-      user_email, 
-      subject, 
-      message, 
-      contact_type 
-    } = contactData;
+    // Add null checks for contact data too
+    const safeContactData = {
+      user_email: contactData.user_email || '',
+      subject: contactData.subject || '',
+      message: contactData.message || '',
+      contact_type: contactData.contact_type || 'general'
+    };
     
     const query = `
       INSERT INTO contacts 
@@ -181,13 +182,13 @@ async function createContact(contactData) {
       VALUES (?, ?, ?, ?)
     `;
     
-    console.log('🔄 Creating contact message:', { user_email, subject });
+    console.log('🔄 Creating contact message:', safeContactData);
     
     const [result] = await db.execute(query, [
-      user_email, 
-      subject, 
-      message, 
-      contact_type || 'general'
+      safeContactData.user_email, 
+      safeContactData.subject, 
+      safeContactData.message, 
+      safeContactData.contact_type
     ]);
     
     console.log('✅ Contact message created, ID:', result.insertId);

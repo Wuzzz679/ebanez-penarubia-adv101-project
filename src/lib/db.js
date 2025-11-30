@@ -12,7 +12,6 @@ const dbConfig = {
   reconnect: true,
   acquireTimeout: 60000,
   timeout: 60000,
-  connectionLimit: 10,
   maxIdle: 10,
   idleTimeout: 60000,
 };
@@ -178,4 +177,60 @@ export async function checkDatabaseHealth() {
   }
 }
 
+// In lib/db.js - Update the wishlistQueries section
+
+export const wishlistQueries = {
+  getUserWishlist: (userEmail) => 
+    query(
+      `SELECT w.*, p.name, p.slug, p.price, p.description, p.image as image 
+       FROM wishlist w 
+       JOIN products p ON w.product_id = p.id 
+       WHERE w.user_email = ? 
+       ORDER BY w.created_at DESC`,
+      [userEmail]
+    ),
+
+  checkWishlistItem: (userEmail, productId) =>
+    query(
+      'SELECT id FROM wishlist WHERE user_email = ? AND product_id = ?',
+      [userEmail, productId]
+    ),
+
+  addToWishlist: (userEmail, productId) =>
+    query(
+      'INSERT INTO wishlist (user_email, product_id) VALUES (?, ?)',
+      [userEmail, productId]
+    ),
+
+ removeFromWishlist: async (userEmail, productId) => {
+  try {
+    console.log('🗑️ DB: Executing DELETE query for:', { userEmail, productId });
+    
+    const [result] = await query(
+      'DELETE FROM wishlist WHERE user_email = ? AND product_id = ?',
+      [userEmail, productId]
+    );
+    
+    console.log('✅ DB: Delete result:', result);
+    console.log('✅ DB: Affected rows:', result.affectedRows);
+    
+    return result;
+  } catch (error) {
+    console.error('❌ DB: Remove error:', error);
+    throw error;
+  }
+},
+
+  getWishlistCount: (userEmail) =>
+    query(
+      'SELECT COUNT(*) as count FROM wishlist WHERE user_email = ?',
+      [userEmail]
+    ),
+
+  isInWishlist: (userEmail, productId) =>
+    query(
+      'SELECT id FROM wishlist WHERE user_email = ? AND product_id = ?',
+      [userEmail, productId]
+    )
+};
 export default db;

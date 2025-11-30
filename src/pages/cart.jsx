@@ -62,72 +62,80 @@ export default function CartPage() {
   };
 
   const handleCheckout = async () => {
-    if (!user) return alert("Please login to checkout!");
-    if (cart.length === 0) return alert("Your cart is empty!");
+  if (!user) return alert("Please login to checkout!");
+  if (cart.length === 0) return alert("Your cart is empty!");
 
-    // Validate form
-    if (!checkoutData.customer_name || !checkoutData.customer_address || !checkoutData.customer_phone) {
-      return alert("Please fill in all required fields: Name, Phone, and Address");
+  // Validate form
+  if (!checkoutData.customer_name || !checkoutData.customer_address || !checkoutData.customer_phone) {
+    return alert("Please fill in all required fields: Name, Phone, and Address");
+  }
+
+  setIsCheckingOut(true);
+
+  try {
+    console.log('🔄 Starting checkout process...');
+
+    // Prepare cart items with proper field names
+    const preparedItems = cart.map(item => ({
+      title: item.name || item.title || 'Unknown Product', // Handle both name and title
+      image: item.image || item.img || '', // Handle both image and img
+      size: item.size || 'Not specified',
+      price: item.price || 0,
+      quantity: item.quantity || 1
+    }));
+
+    // Save all items as a single order with customer info
+    const orderData = {
+      user_email: user,
+      items: preparedItems, // Use prepared items with consistent field names
+      customer_name: checkoutData.customer_name,
+      customer_phone: checkoutData.customer_phone,
+      customer_address: checkoutData.customer_address,
+      payment_method: checkoutData.payment_method,
+      total: total
+    };
+
+    console.log('📨 Sending order data:', orderData);
+
+    const response = await fetch('/api/orders/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(orderData),
+    });
+
+    console.log('📩 API Response status:', response.status);
+    
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(responseData.error || `Failed to save order: ${response.status}`);
     }
 
-    setIsCheckingOut(true);
+    console.log('✅ Order saved:', responseData);
 
-    try {
-      console.log('🔄 Starting checkout process...');
+    // Clear cart after successful checkout
+    setCart([]);
+    localStorage.setItem(`cart_${user}`, JSON.stringify([]));
+    setShowCheckoutForm(false);
+    setCheckoutData({
+      customer_name: "",
+      customer_phone: "",
+      customer_address: "",
+      payment_method: "cash"
+    });
 
-      // Save all items as a single order with customer info
-      const orderData = {
-        user_email: user,
-        items: cart, // Send all cart items
-        customer_name: checkoutData.customer_name,
-        customer_phone: checkoutData.customer_phone,
-        customer_address: checkoutData.customer_address,
-        payment_method: checkoutData.payment_method,
-        total: total
-      };
+    alert("Checkout successful! Your order has been placed.");
+    router.push("/myorders");
 
-      console.log('📨 Sending order data:', orderData);
-
-      const response = await fetch('/api/orders/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderData),
-      });
-
-      console.log('📩 API Response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to save order: ${response.status} - ${errorText}`);
-      }
-
-      const responseData = await response.json();
-      console.log('✅ Order saved:', responseData);
-
-      // Clear cart after successful checkout
-      setCart([]);
-      localStorage.setItem(`cart_${user}`, JSON.stringify([]));
-      setShowCheckoutForm(false);
-      setCheckoutData({
-        customer_name: "",
-        customer_phone: "",
-        customer_address: "",
-        payment_method: "cash"
-      });
-
-      alert("Checkout successful! Your order has been placed.");
-      router.push("/myorders");
-
-    } catch (error) {
-      console.error('❌ Checkout error:', error);
-      alert(`Checkout failed: ${error.message}\n\nPlease check if the database table has the new columns.`);
-    } finally {
-      setIsCheckingOut(false);
-    }
-  };
-
+  } catch (error) {
+    console.error('❌ Checkout error:', error);
+    alert(`Checkout failed: ${error.message}`);
+  } finally {
+    setIsCheckingOut(false);
+  }
+};
   const cancelCheckout = () => {
     setShowCheckoutForm(false);
     setCheckoutData({

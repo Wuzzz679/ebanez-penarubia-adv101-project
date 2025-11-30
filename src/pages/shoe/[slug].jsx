@@ -2,6 +2,7 @@ import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import styles from "../../styles/shoe.module.css";
 import ProductReviews from "../productreview";
+import { addToWishlist } from "../../utils/wishlistUtils";
 
 const shoesData = [
   {
@@ -70,6 +71,7 @@ export default function ShoePage() {
   const [selectedSize, setSelectedSize] = useState(null);
   const [cartCount, setCartCount] = useState(0);
   const [user, setUser] = useState(null);
+  const [wishlistCount, setWishlistCount] = useState(0);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -77,6 +79,10 @@ export default function ShoePage() {
       setUser(storedUser);
       const userCart = JSON.parse(localStorage.getItem(`cart_${storedUser}`)) || [];
       setCartCount(userCart.length);
+      
+      // Load wishlist count
+      const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${storedUser}`)) || [];
+      setWishlistCount(userWishlist.length);
     }
   }, []);
 
@@ -108,11 +114,54 @@ export default function ShoePage() {
     alert(`Added ${item.title} (Size ${item.size}) to your cart`);
   };
 
+  const handleAddToWishlist = () => {
+    if (!user) {
+      alert("Please login to add items to wishlist");
+      return;
+    }
+
+    // Prepare product data for wishlist
+    const productData = {
+      id: shoe.id,
+      slug: shoe.slug,
+      name: shoe.name,
+      price: parseInt(shoe.price.replace(/[₱,]/g, "")),
+      img: shoe.images[0], // Use first image as main image
+      description: shoe.description
+    };
+
+    const success = addToWishlist(productData, user);
+    if (success) {
+      // Update wishlist count
+      const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${user}`)) || [];
+      setWishlistCount(userWishlist.length);
+      
+      // Optional: Ask if user wants to go to wishlist
+      const goToWishlist = confirm("Item added to wishlist! Do you want to view your wishlist?");
+      if (goToWishlist) {
+        router.push("/wishlist");
+      }
+    }
+  };
+
+  const handleGoToWishlist = () => {
+    if (!user) {
+      alert("Please login to view your wishlist");
+      return;
+    }
+    router.push("/wishlist");
+  };
+
   return (
     <div className={styles.pageContainer}>
       <header className={styles.header}>
-        <h1>StreetKicks</h1>
-        <div className={styles.cart}>Cart: {cartCount}</div>
+        <h1 onClick={() => router.push("/")} style={{cursor: "pointer"}}>StreetKicks</h1>
+        <div className={styles.navButtons}>
+          <button className={styles.wishlistBtn} onClick={handleGoToWishlist}>
+            ♡ Wishlist ({wishlistCount})
+          </button>
+          <div className={styles.cart}>Cart: {cartCount}</div>
+        </div>
       </header>
 
       <main className={styles.mainContent}>
@@ -154,13 +203,17 @@ export default function ShoePage() {
             ))}
           </div>
 
-          <button className={styles.addToCartBtn} onClick={handleAddToCart}>
-            Add to Cart
-          </button>
+          <div className={styles.buttonGroup}>
+            <button className={styles.addToCartBtn} onClick={handleAddToCart}>
+              Add to Cart
+            </button>
+            <button className={styles.addToWishlistBtn} onClick={handleAddToWishlist}>
+              ♡ Add to Wishlist
+            </button>
+          </div>
         </div>
       </main>
 
-      {}
       <section className={styles.reviewsSection}>
         <ProductReviews productId={shoe.id} />
       </section>
