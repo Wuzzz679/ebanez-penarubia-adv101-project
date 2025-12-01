@@ -82,30 +82,6 @@ export default function Home() {
     { name: "STYLE", slug: "style", img: "/style.jpg" },
   ];
 
-  const featuredReviews = [
-    {
-      id: 1,
-      rating: 5,
-      text: "The Nike Dunk Low is incredibly comfortable and true to size. Got so many compliments on my first day wearing them!",
-      author: "Maria S.",
-      product: "Nike Dunk Low"
-    },
-    {
-      id: 2,
-      rating: 4,
-      text: "Fast shipping and great quality. The Air Jordan 1 Lows are perfect for both casual wear and basketball.",
-      author: "John D.",
-      product: "Air Jordan 1 Low"
-    },
-    {
-      id: 3,
-      rating: 5,
-      text: "Love my Chuck Taylors! They never go out of style. StreetKicks had the best price and authentic products.",
-      author: "Sarah L.",
-      product: "Chuck Taylor All Star"
-    }
-  ];
-
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(4);
   const [cartCount, setCartCount] = useState(0);
@@ -185,13 +161,10 @@ export default function Home() {
       <nav className={styles.navbar}>
         <div className={styles.logo} onClick={() => router.push("/")}>StreetKicks</div>
         <ul className={styles.navLinks}>
-          <li><a href="#trending">Trending</a></li>
-          <li><a href="#categories">Categories</a></li>
+          <li><a onClick={() => router.push("/reviews")} style={{ cursor: "pointer" }}>Reviews</a></li>
           <li><a onClick={() => router.push("/myorders")} style={{ cursor: "pointer" }}>My Orders</a></li>
           <li><a onClick={() => router.push("/profile")} style={{ cursor: "pointer" }}>Profile</a></li>
-              <li><a onClick={() => router.push("/reviews")} style={{ cursor: "pointer" }}>My Reviews</a></li>
-               <li><a onClick={() => router.push("/wishlist")} style={{ cursor: "pointer" }}>Wishlist</a></li>
-         
+          <li><a onClick={() => router.push("/wishlist")} style={{ cursor: "pointer" }}>My Wishlist</a></li>
         </ul>
         <div className={styles.navButtons}>
           {user ? (
@@ -221,7 +194,6 @@ export default function Home() {
       <section className={styles.trending} id="trending">
         <h2>Trending Sneakers</h2>
   
-        
         <div className={styles.carouselWrapper}>
           <div
             className={styles.trendingGrid}
@@ -237,13 +209,9 @@ export default function Home() {
                   <p className={styles.name}>{shoe.name}</p>
                   <p className={styles.price}>₱{shoe.price.toLocaleString()}</p>
                   
-                  {}
                   <div className={styles.ratingSection}>
                     {renderStars(shoe.rating)}
-                   
                   </div>
-                  
-               
                 </div>
               </div>
             ))}
@@ -269,31 +237,10 @@ export default function Home() {
         </div>
       </section>
 
-      {}
-      <section className={styles.featuredReviews}>
-        <h2>What Our Customers Say</h2>
-      
-        
-        <div className={styles.reviewsGrid}>
-          {featuredReviews.map((review) => (
-            <div key={review.id} className={styles.reviewCard}>
-              <div className={styles.reviewHeader}>
-                {renderStars(review.rating)}
-                <span className={styles.reviewer}>{review.author}</span>
-              </div>
-              <p className={styles.reviewText}>"{review.text}"</p>
-              <span className={styles.reviewProduct}>on {review.product}</span>
-            </div>
-          ))}
-        </div>
-        
-       
-      </section>
-
       <footer className={styles.footer} id="contact">
         <div className={styles.footerContent}>
           <div className={styles.footerSection}>
-           
+            {}
           </div>
           
           <ul className={styles.footerLinks}>
@@ -301,7 +248,6 @@ export default function Home() {
             <li><Link href="/aboutus">About Us</Link></li>
             <li><Link href="/careers">Careers</Link></li>
             <li><Link href="/newsletter">Newsletter</Link></li>
-            <li><Link href="/reviews">Customer Reviews</Link></li>
           </ul>
         </div>
       </footer>

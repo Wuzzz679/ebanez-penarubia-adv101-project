@@ -309,126 +309,6 @@
   text-shadow: 0 0 10px #00f5d4;
 }
 
-/* Featured Reviews Section - Cyberpunk Theme */
-.featuredReviews {
-  padding: 100px 5%;
-  text-align: center;
-  background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
-  border-top: 2px solid #00f5d4;
-  border-bottom: 2px solid #00f5d4;
-}
-
-.featuredReviews h2 {
-  font-size: 2.8rem;
-  font-weight: 900;
-  color: #00f5d4;
-  margin-bottom: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 4px;
-  text-shadow: 0 0 20px #00f5d4;
-}
-
-.sectionSubtitle {
-  text-align: center;
-  color: #ccc;
-  margin-bottom: 3rem;
-  font-size: 1.3rem;
-  text-shadow: 0 0 10px rgba(255,255,255,0.3);
-}
-
-.reviewsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 2rem;
-  margin: 3rem 0;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.reviewCard {
-  background: linear-gradient(145deg, #1a1a1a, #222);
-  padding: 2.5rem;
-  border-radius: 1.5rem;
-  border: 1px solid #333;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.6);
-  text-align: left;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.reviewCard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(0, 245, 212, 0.1), transparent);
-  transition: left 0.6s ease;
-}
-
-.reviewCard:hover::before {
-  left: 100%;
-}
-
-.reviewCard:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 0 25px #00f5d4, 0 8px 30px rgba(0, 245, 212, 0.3);
-  border-color: #00f5d4;
-}
-
-.reviewHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.reviewer {
-  font-weight: 600;
-  color: #00f5d4;
-  font-size: 1.1rem;
-  text-shadow: 0 0 8px #00f5d4;
-}
-
-.reviewText {
-  line-height: 1.6;
-  color: #ccc;
-  margin-bottom: 1.5rem;
-  font-style: italic;
-  font-size: 1rem;
-}
-
-.reviewProduct {
-  font-size: 0.9rem;
-  color: #ff6600;
-  font-weight: 500;
-  text-shadow: 0 0 8px rgba(255, 102, 0, 0.5);
-}
-
-.allReviewsBtn {
-  background: linear-gradient(135deg, #00f5d4, #00c2ff);
-  color: #111;
-  padding: 1.2rem 3rem;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-  font-size: 1.2rem;
-  font-weight: 700;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  box-shadow: 0 0 20px rgba(0, 245, 212, 0.5);
-}
-
-.allReviewsBtn:hover {
-  background: linear-gradient(135deg, #00c2ff, #00f5d4);
-  transform: scale(1.05);
-  box-shadow: 0 0 30px #00f5d4, 0 0 50px rgba(0, 245, 212, 0.7);
-}
-
 /* Rating Stars - Cyberpunk Theme - FIXED ALIGNMENT */
 .stars {
   display: flex;
@@ -475,91 +355,57 @@
   margin-top: 0.3rem;
 }
 
-.viewReviewsBtn {
-  background: transparent;
-  color: #00f5d4;
-  border: 2px solid #00f5d4;
-  padding: 0.7rem 1.5rem;
-  border-radius: 25px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  margin-top: 0.8rem;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
 
-.viewReviewsBtn:hover {
-  background: #00f5d4;
-  color: #111;
-  box-shadow: 0 0 15px #00f5d4;
-  transform: scale(1.05);
-}
-
-/* Footer - REDUCED SIZE */
 .footer {
   background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
   color: #fff;
-  padding: 1rem 0 0.5rem;
+  padding: 0.5rem 0 0.5rem; 
   text-align: center;
   position: relative;
   overflow: hidden;
   border-top: 2px solid #00f5d4;
+  
 }
 
 .footerContent {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 2rem 1rem;
-}
-
-.footerSection {
-  flex: 1;
-  text-align: left;
-}
-
-.footerSection h3 {
-  color: #00f5d4;
-  margin-bottom: 1rem;
-  font-size: 1.5rem;
-  text-shadow: 0 0 10px #00f5d4;
-}
-
-.footerSection p {
-  color: #ccc;
-  line-height: 1.6;
+  padding: 0 2rem;
 }
 
 .footerLinks {
   list-style: none;
   display: flex;
   justify-content: center;
-  gap: 7.5rem;
-  margin-top: 0.5rem;
+  gap: 8.4rem; 
+  margin: 2rem 0; 
+  flex-wrap: wrap;
 }
 
 .footerLinks li a {
   color: #00f5d4;
   text-decoration: none;
-  font-weight: 700;
-  font-size: 1.2rem;
+  font-weight: 900; /* MATCHING NAV FONT WEIGHT: 900 same as .navLinks li a */
+  font-size: 1.5rem; /* MATCHING NAV FONT SIZE: 1.5rem same as .navLinks li a */
   position: relative;
   transition: all 0.3s ease;
+  padding: 0.5rem 0;
+  letter-spacing: 0.5px; /* Added some letter spacing for better readability */
 }
 
+/* MATCHING NAV HOVER EFFECTS */
 .footerLinks li a::after {
   content: '';
   position: absolute;
   width: 0;
   height: 2px;
-  bottom: -4px;
+  bottom: -4px; /* MATCHING NAV: -4px same as .navLinks li a::after */
   left: 0;
   background-color: #00f5d4;
-  box-shadow: 0 0 10px #00f5d4, 0 0 20px #00f5d4;
+  box-shadow: 0 0 8px #00f5d4, 0 0 15px #00f5d4; /* MATCHING NAV SHADOW */
   transition: width 0.3s ease;
 }
 
@@ -568,21 +414,22 @@
 }
 
 .footerLinks li a:hover {
-  text-shadow: 0 0 5px #00f5d4, 0 0 15px #00f5d4;
-  transform: translateY(-2px);
+  text-shadow: 0 0 5px #00f5d4, 0 0 12px #00f5d4; /* MATCHING NAV SHADOW */
+  transform: translateY(-2px); 
 }
 
 .footerBottom {
   text-align: center;
-  padding-top: 1rem;
-  margin-top: 1rem;
+  padding-top: 2rem; 
+  margin-top: 2rem;
   border-top: 1px solid rgba(0, 245, 212, 0.3);
-  color: #ccc;
-  font-size: 0.9rem;
+  color: #00f5d4; 
+  font-size: 1rem; 
+  font-weight: 600; 
+  width: 100%;
+  text-shadow: 0 0 5px rgba(0, 245, 212, 0.5);
 }
-
-/* Carousel Arrows */
-.carouselWrapper {
+/* Carousel Arrows */.carouselWrapper {
   position: relative;
   overflow: hidden;
   width: 100%;
@@ -619,8 +466,8 @@
   box-shadow: 0 0 20px #00f5d4, 0 0 40px rgba(0, 245, 212, 0.7);
 }
 
-.prevArrow { left: 0; }
-.nextArrow { right: 0; }
+.prevArrow { left: 10px; }
+.nextArrow { right: 10px; }
 
 @keyframes pulse {
   0% { box-shadow: 0 0 10px #00f5d4, 0 0 20px rgba(0,245,212,0.5); }
@@ -674,6 +521,9 @@
     margin-right: 0;
     text-align: center;
   }
+  .footerLinks {
+    gap: 2rem;
+  }
 }
 
 @media (max-width: 768px) {
@@ -681,16 +531,6 @@
     flex-direction: column;
     gap: 1rem;
     text-align: center;
-  }
-  
-  .reviewsGrid {
-    grid-template-columns: 1fr;
-  }
-  
-  .reviewHeader {
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: flex-start;
   }
   
   .navLinks {
@@ -721,7 +561,12 @@
   }
   
   .footerLinks {
-    gap: 2rem;
+    gap: 1.5rem;
+    flex-direction: column;
+  }
+  
+  .categories h2 {
+    margin-right: 0;
   }
 }
 
@@ -730,5 +575,32 @@
   .footerLinks {
     flex-direction: column;
     gap: 1rem;
+  }
+  
+  .trending h2 {
+    margin-right: 0;
+    font-size: 2rem;
+  }
+  
+  .categories h2 {
+    margin-right: 0;
+    font-size: 2rem;
+  }
+  
+  .heroOverlay {
+    padding: 2rem 1rem;
+  }
+  
+  .heroOverlay h1 {
+    font-size: 2.5rem;
+  }
+  
+  .heroOverlay p {
+    font-size: 1.2rem;
+  }
+  
+  .navLinks {
+    gap: 1rem;
+    flex-direction: column;
   }
 }

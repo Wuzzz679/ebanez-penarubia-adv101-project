@@ -15,21 +15,15 @@ export default function Wishlist() {
   const router = useRouter();
   const [wishlistItems, setWishlistItems] = useState([]);
   const [user, setUser] = useState(null);
-  const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(true);
   const [cartCount, setCartCount] = useState(0);
-  const [syncStatus, setSyncStatus] = useState('');
   const [wishlistCount, setWishlistCount] = useState(0);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    const storedUsername = localStorage.getItem("username");
     
     if (storedUser) {
       setUser(storedUser);
-      setUsername(storedUsername || storedUser.split('@')[0]);
-      
-      // Load user data
       loadUserData(storedUser);
     } else {
       // Redirect to login if not authenticated
@@ -37,125 +31,88 @@ export default function Wishlist() {
     }
   }, [router]);
 
-  // In your wishlist page component - Update the loadUserData function
-
-// In your wishlist page component - Update the loadUserData function
-
-const loadUserData = async (userEmail) => {
-  try {
-    setLoading(true);
-    setSyncStatus('syncing');
-    
-    console.log('🔄 Loading user data for:', userEmail);
-    
-    // Load cart count first (this should always work)
+  const loadUserData = async (userEmail) => {
     try {
-      const userCart = JSON.parse(localStorage.getItem(`cart_${userEmail}`)) || [];
-      setCartCount(userCart.length);
-      console.log('✅ Cart count loaded:', userCart.length);
-    } catch (cartError) {
-      console.error('Failed to load cart:', cartError);
-      setCartCount(0);
-    }
-    
-    // Try to load wishlist from localStorage first as fallback
-    let localWishlist = [];
-    try {
-      localWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
-      console.log('📦 Local wishlist items:', localWishlist.length);
-    } catch (localError) {
-      console.error('Failed to load local wishlist:', localError);
-      localWishlist = [];
-    }
-    
-    // Try to sync, but don't block if it fails
-    try {
-      console.log('🔄 Attempting to sync with server...');
-      const syncResult = await syncWishlistToServer(userEmail);
-      setSyncStatus(syncResult ? 'synced' : 'local');
-      console.log('✅ Sync result:', syncResult ? 'synced' : 'failed');
-    } catch (syncError) {
-      console.log('❌ Sync failed, using local data:', syncError.message);
-      setSyncStatus('local');
-    }
-    
-    // Load wishlist with better error handling
-    try {
-      console.log('📡 Fetching wishlist from API...');
-      const wishlistData = await getUserWishlist(userEmail);
-      console.log('✅ Wishlist data loaded from API:', wishlistData.length, 'items');
+      setLoading(true);
       
-      // If API returned empty but we have local data, use local data
-      if (wishlistData.length === 0 && localWishlist.length > 0) {
-        console.log('🔄 API returned empty, using local wishlist data');
+      // Load cart count
+      try {
+        const userCart = JSON.parse(localStorage.getItem(`cart_${userEmail}`)) || [];
+        setCartCount(userCart.length);
+      } catch (cartError) {
+        setCartCount(0);
+      }
+      
+      // Try to load wishlist from localStorage first as fallback
+      let localWishlist = [];
+      try {
+        localWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
+      } catch (localError) {
+        localWishlist = [];
+      }
+      
+      // Try to sync with server
+      try {
+        await syncWishlistToServer(userEmail);
+      } catch (syncError) {
+        // Silently fail sync
+      }
+      
+      // Load wishlist from API
+      try {
+        const wishlistData = await getUserWishlist(userEmail);
+        
+        // If API returned empty but we have local data, use local data
+        if (wishlistData.length === 0 && localWishlist.length > 0) {
+          setWishlistItems(localWishlist);
+          setWishlistCount(localWishlist.length);
+        } else {
+          setWishlistItems(wishlistData);
+          setWishlistCount(wishlistData.length);
+        }
+      } catch (wishlistError) {
         setWishlistItems(localWishlist);
         setWishlistCount(localWishlist.length);
-      } else {
-        setWishlistItems(wishlistData);
-        setWishlistCount(wishlistData.length);
       }
-    } catch (wishlistError) {
-      console.log('❌ Failed to load from API, using local storage:', wishlistError.message);
-      setWishlistItems(localWishlist);
-      setWishlistCount(localWishlist.length);
-      setSyncStatus('local');
-    }
       
-  } catch (error) {
-    console.error('💥 Failed to load user data:', error);
-    // Final fallback - use localStorage only
-    try {
-      const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
-      setWishlistItems(userWishlist);
-      setWishlistCount(userWishlist.length);
-      
-      const userCart = JSON.parse(localStorage.getItem(`cart_${userEmail}`)) || [];
-      setCartCount(userCart.length);
-    } catch (finalError) {
-      console.error('💥 Even final fallback failed:', finalError);
-      setWishlistItems([]);
-      setWishlistCount(0);
-      setCartCount(0);
+    } catch (error) {
+      // Final fallback - use localStorage only
+      try {
+        const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
+        setWishlistItems(userWishlist);
+        setWishlistCount(userWishlist.length);
+        
+        const userCart = JSON.parse(localStorage.getItem(`cart_${userEmail}`)) || [];
+        setCartCount(userCart.length);
+      } catch (finalError) {
+        setWishlistItems([]);
+        setWishlistCount(0);
+        setCartCount(0);
+      }
+    } finally {
+      setLoading(false);
     }
-    setSyncStatus('local');
-  } finally {
-    setLoading(false);
-    console.log('🏁 User data loading complete');
-  }
-};
+  };
 
   const handleRemoveFromWishlist = async (productId) => {
     if (!user) return;
     
-    console.log('=== FRONTEND REMOVE DEBUG START ===');
-    console.log('Removing product ID:', productId);
-    console.log('User email:', user);
-    console.log('Current wishlist items count:', wishlistItems.length);
-    
     try {
-      console.log('📡 Calling removeFromWishlist utility...');
       const result = await removeFromWishlist(productId, user);
-      console.log('✅ Remove API result:', result);
       
       if (result.success) {
         const updatedWishlist = wishlistItems.filter(item => item.id !== productId);
         setWishlistItems(updatedWishlist);
         setWishlistCount(updatedWishlist.length);
-        console.log('✅ UI updated successfully. New count:', updatedWishlist.length);
-        console.log('=== FRONTEND REMOVE DEBUG END ===');
         alert("Item removed from wishlist!");
       } else {
-        console.error('❌ Failed to remove item:', result.message);
-        console.log('=== FRONTEND REMOVE DEBUG END ===');
         alert("Failed to remove item from wishlist. Please try again.");
       }
     } catch (error) {
-      console.error('❌ Error in handleRemoveFromWishlist:', error);
+      // Fallback: Remove from UI even if API fails
       const updatedWishlist = wishlistItems.filter(item => item.id !== productId);
       setWishlistItems(updatedWishlist);
       setWishlistCount(updatedWishlist.length);
-      console.log('✅ Fallback: Removed from UI anyway');
-      console.log('=== FRONTEND REMOVE DEBUG END ===');
       alert("Item removed from wishlist!");
     }
   };
@@ -186,7 +143,6 @@ const loadUserData = async (userEmail) => {
       
       alert("Product moved to cart!");
     } catch (error) {
-      console.error('Failed to move to cart:', error);
       alert("Failed to move item to cart. Please try again.");
     }
   };
@@ -202,20 +158,6 @@ const loadUserData = async (userEmail) => {
     localStorage.setItem(`wishlist_${user}`, JSON.stringify(updatedWishlist));
   };
 
-  const getDisplayName = () => {
-    if (username && username !== user) {
-      return username;
-    }
-    return user ? user.split('@')[0] : '';
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("username");
-    localStorage.removeItem("token");
-    router.push("/");
-  };
-
   const clearWishlist = async () => {
     if (!user || wishlistItems.length === 0) return;
     
@@ -228,7 +170,6 @@ const loadUserData = async (userEmail) => {
         try {
           await removeFromWishlist(product.id, user);
         } catch (error) {
-          console.log(`Failed to remove item ${product.id}:`, error.message);
           // Continue with other items
         }
       }
@@ -238,27 +179,10 @@ const loadUserData = async (userEmail) => {
       setWishlistCount(0);
       alert("Wishlist cleared!");
     } catch (error) {
-      console.error('Failed to clear wishlist:', error);
       // Still clear the UI even if there are errors
       setWishlistItems([]);
       setWishlistCount(0);
       alert("Wishlist cleared!");
-    }
-  };
-
-  const retrySync = async () => {
-    if (user) {
-      setSyncStatus('syncing');
-      try {
-        const syncResult = await syncWishlistToServer(user);
-        const updatedWishlist = await getUserWishlist(user);
-        setWishlistItems(updatedWishlist);
-        setWishlistCount(updatedWishlist.length);
-        setSyncStatus(syncResult ? 'synced' : 'local');
-      } catch (error) {
-        console.error('Retry sync failed:', error);
-        setSyncStatus('local');
-      }
     }
   };
 
@@ -283,9 +207,6 @@ const loadUserData = async (userEmail) => {
         <div className={styles.loading}>
           <div className={styles.spinner}></div>
           <p>Loading your wishlist...</p>
-          {syncStatus === 'syncing' && (
-            <p className={styles.syncMessage}>Syncing with server...</p>
-          )}
         </div>
       </div>
     );
@@ -293,85 +214,56 @@ const loadUserData = async (userEmail) => {
 
   return (
     <div className={styles.pageContainer}>
-      <nav className={styles.navbar}>
-        <div className={styles.logo} onClick={() => router.push("/")}>StreetKicks</div>
-        <ul className={styles.navLinks}>
-          <li><a onClick={() => router.push("/")} style={{ cursor: "pointer" }}>Home</a></li>
-          <li><a onClick={() => router.push("/myorders")} style={{ cursor: "pointer" }}>My Orders</a></li>
-          <li><a onClick={() => router.push("/profile")} style={{ cursor: "pointer" }}>Profile</a></li>
-          <li><a onClick={() => router.push("/reviews")} style={{ cursor: "pointer" }}>My Reviews</a></li>
-          <li><a onClick={() => router.push("/wishlist")} style={{ cursor: "pointer" }}>Wishlist</a></li>
-        </ul>
-        <div className={styles.navButtons}>
-          <span className={styles.userName}>{getDisplayName()}</span>
-          <button className={styles.logoutBtn} onClick={handleLogout}>Log Out</button>
-          <button className={styles.cartBtn} onClick={() => router.push("/cart")}>
-            🛒 Cart ({cartCount})
-          </button>
+      {/* Minimal Header with only Logo and Cart */}
+      <div className={styles.simpleHeader}>
+        <div className={styles.logo} onClick={() => router.push("/")}>
+          StreetKicks
         </div>
-      </nav>
-
-      <div className={styles.header}>
-        <div className={styles.headerLeft}>
-          <h1>My Wishlist</h1>
-          <div className={styles.headerInfo}>
-            <span className={styles.itemCount}>{wishlistCount} items</span>
-            {syncStatus === 'local' && (
-              <span className={styles.syncStatus} onClick={retrySync}>
-                🔄 Offline Mode - Click to Retry Sync
-              </span>
-            )}
-            {syncStatus === 'synced' && (
-              <span className={styles.syncStatus}>
-                ✅ Synced
-              </span>
-            )}
-            {syncStatus === 'syncing' && (
-              <span className={styles.syncStatus}>
-                ⏳ Syncing...
-              </span>
-            )}
-          </div>
-        </div>
-        {wishlistItems.length > 0 && (
-          <div className={styles.headerActions}>
-            <button 
-              className={styles.continueShoppingBtn}
-              onClick={continueShopping}
-            >
-              Continue Shopping
-            </button>
-            <button 
-              className={styles.clearAllBtn}
-              onClick={clearWishlist}
-            >
-              Clear All
-            </button>
-          </div>
-        )}
+        
+        <button 
+          className={styles.cartButton}
+          onClick={() => router.push("/cart")}
+        >
+          🛒 Cart ({cartCount})
+        </button>
       </div>
 
+      {/* Page Title */}
+      <div className={styles.pageTitle}>
+        <h1>My Wishlist</h1>
+        <div className={styles.itemCount}>{wishlistCount} items</div>
+      </div>
+
+      {/* Wishlist Actions */}
+      {wishlistItems.length > 0 && (
+        <div className={styles.wishlistActions}>
+          <button 
+            className={styles.continueShoppingBtn}
+            onClick={continueShopping}
+          >
+            Continue Shopping
+          </button>
+          <button 
+            className={styles.clearAllBtn}
+            onClick={clearWishlist}
+          >
+            Clear All
+          </button>
+        </div>
+      )}
+
+      {/* Wishlist Content */}
       {wishlistItems.length === 0 ? (
         <div className={styles.emptyWishlist}>
           <div className={styles.emptyIcon}>♡</div>
           <h2>Your wishlist is empty</h2>
           <p>Start adding your favorite sneakers to your wishlist!</p>
-          <div className={styles.emptyActions}>
-            <button 
-              className={styles.shopNowBtn}
-              onClick={() => router.push("/")}
-            >
-              Shop Now
-            </button>
-            {syncStatus === 'local' && (
-              <button 
-                className={styles.retryBtn}
-                onClick={retrySync}
-              >
-                Retry Sync
-              </button>
-            )}
-          </div>
+          <button 
+            className={styles.shopNowBtn}
+            onClick={() => router.push("/")}
+          >
+            Shop Now
+          </button>
         </div>
       ) : (
         <div className={styles.productsSection}>

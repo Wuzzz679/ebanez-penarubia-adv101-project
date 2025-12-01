@@ -1,8 +1,8 @@
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import styles from "../../styles/shoe.module.css";
-import ProductReviews from "../productreview";
 import { addToWishlist } from "../../utils/wishlistUtils";
+import Link from 'next/link';
 
 const shoesData = [
   {
@@ -72,6 +72,21 @@ export default function ShoePage() {
   const [cartCount, setCartCount] = useState(0);
   const [user, setUser] = useState(null);
   const [wishlistCount, setWishlistCount] = useState(0);
+  const [showReviews, setShowReviews] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [userReview, setUserReview] = useState(null);
+  const [reviewStats, setReviewStats] = useState({
+    averageRating: 0,
+    totalReviews: 0
+  });
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [reviewForm, setReviewForm] = useState({
+    rating: 5,
+    title: "",
+    comment: "",
+    verified_purchase: false
+  });
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -80,11 +95,167 @@ export default function ShoePage() {
       const userCart = JSON.parse(localStorage.getItem(`cart_${storedUser}`)) || [];
       setCartCount(userCart.length);
       
-      // Load wishlist count
       const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${storedUser}`)) || [];
       setWishlistCount(userWishlist.length);
     }
   }, []);
+
+  // Load reviews when shoe is loaded
+  useEffect(() => {
+    if (slug) {
+      const shoe = shoesData.find((s) => s.slug === slug);
+      if (shoe && shoe.id) {
+        fetchReviews(shoe.id);
+      }
+    }
+  }, [slug]);
+
+  const fetchReviews = async (productId) => {
+    try {
+      setLoadingReviews(true);
+      const response = await fetch(`/api/reviews?productId=${productId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setReviews(data.reviews);
+        
+        // Check if current user has a review
+        if (user) {
+          const existingUserReview = data.reviews.find(review => review.user_email === user);
+          setUserReview(existingUserReview);
+          
+          // If user has a review, pre-fill the form
+          if (existingUserReview) {
+            setReviewForm({
+              rating: existingUserReview.rating,
+              title: existingUserReview.title,
+              comment: existingUserReview.comment,
+              verified_purchase: existingUserReview.verified_purchase
+            });
+          }
+        }
+        
+        // Calculate average rating
+        if (data.reviews.length > 0) {
+          const avg = data.reviews.reduce((sum, review) => sum + review.rating, 0) / data.reviews.length;
+          setReviewStats({
+            averageRating: avg.toFixed(1),
+            totalReviews: data.reviews.length
+          });
+        } else {
+          setReviewStats({
+            averageRating: 0,
+            totalReviews: 0
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    
+    if (!user) {
+      alert("Please login to submit a review");
+      return;
+    }
+    
+    if (!reviewForm.title.trim()) {
+      alert("Please enter a review title");
+      return;
+    }
+    
+    const shoe = shoesData.find((s) => s.slug === slug);
+    if (!shoe) return;
+    
+    try {
+      setSubmittingReview(true);
+      
+      const reviewData = {
+        product_id: shoe.id,
+        user_email: user,
+        rating: reviewForm.rating,
+        title: reviewForm.title,
+        comment: reviewForm.comment,
+        verified_purchase: reviewForm.verified_purchase
+      };
+      
+      const response = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reviewData),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        alert(data.isUpdate ? '✓ Review updated successfully!' : '✓ Review submitted successfully!');
+        
+        // Don't reset form if it was an update
+        if (!data.isUpdate) {
+          setReviewForm({
+            rating: 5,
+            title: "",
+            comment: "",
+            verified_purchase: false
+          });
+        }
+        
+        // Refresh reviews
+        fetchReviews(shoe.id);
+      } else {
+        alert('Error: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      alert('Error submitting review');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const handleClearForm = () => {
+    setReviewForm({
+      rating: 5,
+      title: "",
+      comment: "",
+      verified_purchase: false
+    });
+    setUserReview(null);
+  };
+
+  const loadUserReviewIntoForm = () => {
+    if (userReview) {
+      setReviewForm({
+        rating: userReview.rating,
+        title: userReview.title,
+        comment: userReview.comment,
+        verified_purchase: userReview.verified_purchase
+      });
+    }
+  };
+
+  const renderStars = (rating) => {
+    const numericRating = parseFloat(rating);
+    return (
+      <div className={styles.stars}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <span 
+            key={star} 
+            className={`${styles.star} ${star <= numericRating ? styles.filled : ''}`}
+          >
+            ★
+          </span>
+        ))}
+      </div>
+    );
+  };
 
   if (!slug) return <p>Loading...</p>;
 
@@ -120,23 +291,20 @@ export default function ShoePage() {
       return;
     }
 
-    // Prepare product data for wishlist
     const productData = {
       id: shoe.id,
       slug: shoe.slug,
       name: shoe.name,
       price: parseInt(shoe.price.replace(/[₱,]/g, "")),
-      img: shoe.images[0], // Use first image as main image
+      img: shoe.images[0],
       description: shoe.description
     };
 
     const success = addToWishlist(productData, user);
     if (success) {
-      // Update wishlist count
       const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${user}`)) || [];
       setWishlistCount(userWishlist.length);
       
-      // Optional: Ask if user wants to go to wishlist
       const goToWishlist = confirm("Item added to wishlist! Do you want to view your wishlist?");
       if (goToWishlist) {
         router.push("/wishlist");
@@ -191,6 +359,21 @@ export default function ShoePage() {
           <p className={styles.price}>{shoe.price}</p>
           <p className={styles.description}>{shoe.description}</p>
 
+          {/* Review Summary */}
+          <div className={styles.reviewSummary}>
+            <div className={styles.reviewRating}>
+              <span className={styles.averageRating}>{reviewStats.averageRating}</span>
+              {renderStars(reviewStats.averageRating)}
+              <span className={styles.reviewCount}>({reviewStats.totalReviews} reviews)</span>
+            </div>
+            <button 
+              className={styles.viewReviewsBtn}
+              onClick={() => setShowReviews(!showReviews)}
+            >
+              {showReviews ? 'Hide Reviews' : 'View Reviews'}
+            </button>
+          </div>
+
           <div className={styles.sizes}>
             {sizes.map((size) => (
               <button
@@ -211,12 +394,181 @@ export default function ShoePage() {
               ♡ Add to Wishlist
             </button>
           </div>
+             <Link href={`/reviews?productId=${shoe.id}`} legacyBehavior>
+                <a className={styles.viewReviewsLink}>
+                  ✍️ View/Write Reviews
+                </a>
+             </Link>
         </div>
       </main>
 
-      <section className={styles.reviewsSection}>
-        <ProductReviews productId={shoe.id} />
-      </section>
+      {/* Reviews Section */}
+      {showReviews && (
+        <section className={styles.reviewsSection}>
+          <h3>Customer Reviews</h3>
+          
+          {/* Review Form */}
+          {user && (
+            <div className={styles.reviewForm}>
+              <h4>Write a Review</h4>
+              
+              {/* User Review Notice */}
+              {userReview && (
+                <div className={styles.userReviewNotice}>
+                  <div className={styles.noticeHeader}>
+                    <span className={styles.noticeIcon}>✎</span>
+                    <strong>You've already reviewed this product</strong>
+                  </div>
+                  <p>Editing will update your existing review</p>
+                  <div className={styles.noticeActions}>
+                    <button 
+                      onClick={loadUserReviewIntoForm}
+                      className={styles.loadReviewBtn}
+                    >
+                      ↻ Load My Current Review
+                    </button>
+                    <button 
+                      onClick={handleClearForm}
+                      className={styles.clearFormBtn}
+                    >
+                      ＋ Write New Review
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              <form onSubmit={handleSubmitReview}>
+                <div className={styles.formRow}>
+                  <label>Rating:</label>
+                  <div className={styles.ratingInput}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        className={`${styles.starButton} ${star <= reviewForm.rating ? styles.selected : ''}`}
+                        onClick={() => setReviewForm({...reviewForm, rating: star})}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className={styles.formRow}>
+                  <label>Title:</label>
+                  <input
+                    type="text"
+                    value={reviewForm.title}
+                    onChange={(e) => setReviewForm({...reviewForm, title: e.target.value})}
+                    placeholder="Summarize your experience"
+                    required
+                  />
+                </div>
+                
+                <div className={styles.formRow}>
+                  <label>Review:</label>
+                  <textarea
+                    value={reviewForm.comment}
+                    onChange={(e) => setReviewForm({...reviewForm, comment: e.target.value})}
+                    placeholder="Share your thoughts about the product..."
+                    rows={4}
+                  />
+                </div>
+                
+                <div className={styles.formRow}>
+                  <label className={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={reviewForm.verified_purchase}
+                      onChange={(e) => setReviewForm({...reviewForm, verified_purchase: e.target.checked})}
+                    />
+                    I purchased this product
+                  </label>
+                </div>
+                
+                <button 
+                  type="submit" 
+                  className={styles.submitReviewBtn}
+                  disabled={submittingReview}
+                >
+                  {submittingReview ? 'Saving...' : 
+                   userReview ? 'Update Review' : 'Submit Review'}
+                </button>
+              </form>
+            </div>
+          )}
+          
+          {/* Reviews List */}
+          <div className={styles.reviewsList}>
+            {loadingReviews ? (
+              <p>Loading reviews...</p>
+            ) : reviews.length === 0 ? (
+              <p className={styles.noReviews}>No reviews yet. Be the first to review!</p>
+            ) : (
+              reviews.map((review) => {
+                const isCurrentUserReview = user && review.user_email === user;
+                return (
+                  <div 
+                    key={review.id} 
+                    className={`${styles.reviewCard} ${isCurrentUserReview ? styles.userReviewCard : ''}`}
+                  >
+                    <div className={styles.reviewHeader}>
+                      <div className={styles.reviewerInfo}>
+                        <div className={styles.reviewerInitial}>
+                          {review.user_email?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                        <div>
+                          <strong>
+                            {review.user_email || 'Anonymous'}
+                            {isCurrentUserReview && (
+                              <span className={styles.yourReviewBadge}> (Your Review)</span>
+                            )}
+                          </strong>
+                          {review.verified_purchase && (
+                            <span className={styles.verifiedBadge}>✓ Verified Purchase</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className={styles.reviewMeta}>
+                        {renderStars(review.rating)}
+                        <span className={styles.reviewDate}>
+                          {new Date(review.created_at).toLocaleDateString()}
+                          {review.created_at !== review.updated_at && ' (edited)'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <h4 className={styles.reviewTitle}>{review.title}</h4>
+                    <p className={styles.reviewComment}>{review.comment}</p>
+                    
+                    {isCurrentUserReview && (
+                      <div className={styles.reviewActions}>
+                        <button 
+                          onClick={() => {
+                            setReviewForm({
+                              rating: review.rating,
+                              title: review.title,
+                              comment: review.comment,
+                              verified_purchase: review.verified_purchase
+                            });
+                            // Scroll to form
+                            document.querySelector(`.${styles.reviewForm}`)?.scrollIntoView({ 
+                              behavior: 'smooth' 
+                            });
+                          }}
+                          className={styles.editReviewBtn}
+                        >
+                          ✎ Edit This Review
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

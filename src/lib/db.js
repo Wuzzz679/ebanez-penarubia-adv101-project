@@ -16,10 +16,9 @@ const dbConfig = {
   idleTimeout: 60000,
 };
 
-// Create connection pool
+
 const db = mysql.createPool(dbConfig);
 
-// Test connection on startup
 db.getConnection()
   .then(connection => {
     console.log('✅ Connected to MySQL database:', dbConfig.database);
@@ -36,7 +35,7 @@ db.getConnection()
     console.error('   3. Username and password are correct');
   });
 
-// Enhanced query function with better error handling
+
 export async function query(sql, params = []) {
   let connection;
   try {
@@ -50,7 +49,38 @@ export async function query(sql, params = []) {
     console.error('   Params:', params);
     console.error('   Error:', error.message);
     
-    // Handle specific error cases
+  
+    if (error.code === 'ER_NO_SUCH_TABLE') {
+      throw new Error(`Database table doesn't exist. Please run the SQL setup script.`);
+    } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+      throw new Error(`Database access denied. Check your username and password.`);
+    } else if (error.code === 'ER_BAD_DB_ERROR') {
+      throw new Error(`Database '${dbConfig.database}' doesn't exist. Please create it first.`);
+    } else {
+      throw new Error(`Database error: ${error.message}`);
+    }
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
+}
+
+
+export async function execute(sql, params = []) {
+  let connection;
+  try {
+    connection = await db.getConnection();
+    console.log('⚡ Executing SQL:', sql.substring(0, 100) + '...');
+    const [results] = await connection.execute(sql, params);
+    return results;
+  } catch (error) {
+    console.error('❌ Database execute error:');
+    console.error('   SQL:', sql);
+    console.error('   Params:', params);
+    console.error('   Error:', error.message);
+    
+
     if (error.code === 'ER_NO_SUCH_TABLE') {
       throw new Error(`Database table doesn't exist. Please run the SQL setup script.`);
     } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
@@ -80,7 +110,45 @@ export const reviewQueries = {
       [productId]
     ),
 
-  // Get all reviews with optional rating filter
+  // Get reviews with replies for a product
+  getProductReviewsWithReplies: async (productId) => {
+    try {
+      // Get reviews first
+      const reviews = await query(
+        `SELECT r.*, u.username as user_name 
+         FROM reviews r 
+         LEFT JOIN users u ON r.user_email = u.email 
+         WHERE r.product_id = ? 
+         ORDER BY r.created_at DESC`,
+        [productId]
+      );
+
+   
+      if (reviews.length > 0) {
+        const reviewIds = reviews.map(r => r.id);
+        const replies = await query(
+          `SELECT rr.* 
+           FROM review_replies rr 
+           WHERE rr.review_id IN (?) 
+           ORDER BY rr.created_at ASC`,
+          [reviewIds]
+        );
+
+      
+        return reviews.map(review => ({
+          ...review,
+          replies: replies.filter(reply => reply.review_id === review.id)
+        }));
+      }
+
+      return reviews;
+    } catch (error) {
+      console.error('Error getting reviews with replies:', error);
+      throw error;
+    }
+  },
+
+
   getAllReviews: (rating = null) => {
     let sql = `
       SELECT r.*, u.username as user_name, p.name as product_name, p.slug as product_slug 
@@ -100,14 +168,14 @@ export const reviewQueries = {
     return query(sql, params);
   },
 
-  // Check if user already reviewed a product
+
   checkExistingReview: (productId, userEmail) =>
     query(
       'SELECT id FROM reviews WHERE product_id = ? AND user_email = ?',
       [productId, userEmail]
     ),
 
-  // Submit a new review
+
   submitReview: (reviewData) =>
     query(
       `INSERT INTO reviews 
@@ -123,7 +191,7 @@ export const reviewQueries = {
       ]
     ),
 
-  // Get newly created review with user info
+ 
   getReviewById: (reviewId) =>
     query(
       `SELECT r.*, u.username as user_name 
@@ -133,51 +201,60 @@ export const reviewQueries = {
       [reviewId]
     ),
 
-  // Check if user purchased the product (for verified purchase)
+
   checkUserPurchase: (userEmail, productId) =>
     query(
       `SELECT id FROM orders 
        WHERE user_email = ? 
        AND JSON_CONTAINS(items, JSON_OBJECT('product_id', ?))`,
       [userEmail, productId]
+    ),
+
+  
+  getReviewReplies: (reviewId) =>
+    query(
+      `SELECT rr.*, u.username as user_name 
+       FROM review_replies rr 
+       LEFT JOIN users u ON rr.user_email = u.email 
+       WHERE rr.review_id = ? 
+       ORDER BY rr.created_at ASC`,
+      [reviewId]
+    ),
+
+  addReviewReply: (replyData) =>
+    query(
+      `INSERT INTO review_replies 
+       (review_id, user_email, comment) 
+       VALUES (?, ?, ?)`,
+      [
+        replyData.review_id,
+        replyData.user_email,
+        replyData.comment
+      ]
+    ),
+
+  getReplyById: (replyId) =>
+    query(
+      `SELECT rr.*, u.username as user_name 
+       FROM review_replies rr 
+       LEFT JOIN users u ON rr.user_email = u.email 
+       WHERE rr.id = ?`,
+      [replyId]
+    ),
+
+  deleteReply: (replyId, userEmail) =>
+    query(
+      'DELETE FROM review_replies WHERE id = ? AND user_email = ?',
+      [replyId, userEmail]
+    ),
+
+  getReviewReplyCount: (reviewId) =>
+    query(
+      'SELECT COUNT(*) as count FROM review_replies WHERE review_id = ?',
+      [reviewId]
     )
 };
 
-// Database initialization function
-export async function initializeDatabase() {
-  try {
-    // Check if required tables exist
-    const tables = await query(`
-      SELECT TABLE_NAME 
-      FROM information_schema.tables 
-      WHERE TABLE_SCHEMA = ? 
-      AND TABLE_NAME IN ('users', 'products', 'reviews', 'orders')
-    `, [dbConfig.database]);
-
-    if (tables.length < 4) {
-      console.warn('⚠️  Some database tables are missing. Please run the SQL setup script.');
-      return false;
-    }
-
-    console.log('✅ Database tables verified');
-    return true;
-  } catch (error) {
-    console.error('❌ Database initialization failed:', error.message);
-    return false;
-  }
-}
-
-// Health check function
-export async function checkDatabaseHealth() {
-  try {
-    await query('SELECT 1');
-    return { healthy: true, message: 'Database connection is healthy' };
-  } catch (error) {
-    return { healthy: false, message: `Database health check failed: ${error.message}` };
-  }
-}
-
-// In lib/db.js - Update the wishlistQueries section
 
 export const wishlistQueries = {
   getUserWishlist: (userEmail) => 
@@ -202,24 +279,24 @@ export const wishlistQueries = {
       [userEmail, productId]
     ),
 
- removeFromWishlist: async (userEmail, productId) => {
-  try {
-    console.log('🗑️ DB: Executing DELETE query for:', { userEmail, productId });
-    
-    const [result] = await query(
-      'DELETE FROM wishlist WHERE user_email = ? AND product_id = ?',
-      [userEmail, productId]
-    );
-    
-    console.log('✅ DB: Delete result:', result);
-    console.log('✅ DB: Affected rows:', result.affectedRows);
-    
-    return result;
-  } catch (error) {
-    console.error('❌ DB: Remove error:', error);
-    throw error;
-  }
-},
+  removeFromWishlist: async (userEmail, productId) => {
+    try {
+      console.log('🗑️ DB: Executing DELETE query for:', { userEmail, productId });
+      
+      const [result] = await query(
+        'DELETE FROM wishlist WHERE user_email = ? AND product_id = ?',
+        [userEmail, productId]
+      );
+      
+      console.log('✅ DB: Delete result:', result);
+      console.log('✅ DB: Affected rows:', result.affectedRows);
+      
+      return result;
+    } catch (error) {
+      console.error('❌ DB: Remove error:', error);
+      throw error;
+    }
+  },
 
   getWishlistCount: (userEmail) =>
     query(
@@ -233,4 +310,99 @@ export const wishlistQueries = {
       [userEmail, productId]
     )
 };
+
+
+export async function initializeDatabase() {
+  try {
+
+    const tables = await query(`
+      SELECT TABLE_NAME 
+      FROM information_schema.tables 
+      WHERE TABLE_SCHEMA = ? 
+      AND TABLE_NAME IN ('users', 'products', 'reviews', 'orders', 'review_replies', 'wishlist')
+    `, [dbConfig.database]);
+
+    const requiredTables = ['users', 'products', 'reviews', 'orders', 'review_replies', 'wishlist'];
+    const existingTables = tables.map(t => t.TABLE_NAME);
+    
+    const missingTables = requiredTables.filter(table => !existingTables.includes(table));
+    
+    if (missingTables.length > 0) {
+      console.warn('⚠️  Missing database tables:', missingTables);
+      console.warn('Please run the SQL setup script.');
+      return false;
+    }
+
+    console.log('✅ Database tables verified');
+    return true;
+  } catch (error) {
+    console.error('❌ Database initialization failed:', error.message);
+    return false;
+  }
+}
+
+
+export async function createMissingTables() {
+  try {
+    console.log('🔄 Checking for missing tables...');
+    
+ 
+    const createReviewRepliesTable = `
+      CREATE TABLE IF NOT EXISTS review_replies (
+        id INT(11) PRIMARY KEY AUTO_INCREMENT,
+        review_id INT(11) NOT NULL,
+        user_email VARCHAR(255) NOT NULL,
+        comment TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE,
+        INDEX idx_review_id (review_id),
+        INDEX idx_user_email (user_email)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `;
+    
+    await query(createReviewRepliesTable);
+    console.log('✅ review_replies table checked/created');
+    
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to create missing tables:', error.message);
+    return false;
+  }
+}
+
+
+export async function checkDatabaseHealth() {
+  try {
+    await query('SELECT 1');
+    
+
+    const tables = await query(`
+      SELECT TABLE_NAME 
+      FROM information_schema.tables 
+      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'review_replies'
+    `, [dbConfig.database]);
+    
+    const hasReviewReplies = tables.length > 0;
+    
+    return { 
+      healthy: true, 
+      message: 'Database connection is healthy',
+      hasReviewReplies 
+    };
+  } catch (error) {
+    return { 
+      healthy: false, 
+      message: `Database health check failed: ${error.message}` 
+    };
+  }
+}
+
+
+initializeDatabase().then(initialized => {
+  if (!initialized) {
+    console.log('🔄 Attempting to create missing tables...');
+    createMissingTables();
+  }
+});
+
 export default db;
