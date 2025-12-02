@@ -173,7 +173,7 @@ export default function Home() {
               <button className={styles.logoutBtn} onClick={handleLogout}>Log Out</button>
             </>
           ) : (
-            <button className={styles.loginBtn} onClick={() => router.push("/login")}>
+            <button className={styles.loginBtn} onClick={() => router.push("/")}>
               Login
             </button>
           )}
