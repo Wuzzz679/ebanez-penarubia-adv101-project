@@ -1,11 +1,13 @@
-// utils/wishlistUtils.js
+
 
 const API_BASE = '/api/wishlist';
 
-// Add to wishlist
-// Add to wishlist - Updated
+
 export const addToWishlist = async (product, userEmail) => {
   try {
+
+    const productId = typeof product.id === 'string' ? parseInt(product.id, 10) : product.id;
+    
     const response = await fetch(API_BASE, {
       method: 'POST',
       headers: {
@@ -13,19 +15,18 @@ export const addToWishlist = async (product, userEmail) => {
       },
       body: JSON.stringify({
         userEmail: userEmail,
-        productId: product.id
+        productId: productId
       }),
     });
 
     if (!response.ok) {
-      console.log('Utils: HTTP error during add, using localStorage fallback. Status:', response.status);
-      // Fallback to localStorage
+
       const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
-      const existingItem = userWishlist.find(item => item.id === product.id);
+      const existingItem = userWishlist.find(item => item.id === productId);
       
       if (!existingItem) {
         userWishlist.push({
-          id: product.id,
+          id: productId,
           name: product.name,
           price: product.price,
           image: product.image || product.img,
@@ -38,7 +39,7 @@ export const addToWishlist = async (product, userEmail) => {
       
       return { 
         success: true, 
-        message: 'Added to wishlist (local storage fallback)',
+        message: 'Added to wishlist',
         count: userWishlist.length 
       };
     }
@@ -46,13 +47,13 @@ export const addToWishlist = async (product, userEmail) => {
     const result = await response.json();
     
     if (result.success) {
-      // Also update localStorage as fallback
+   
       const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
-      const existingItem = userWishlist.find(item => item.id === product.id);
+      const existingItem = userWishlist.find(item => item.id === productId);
       
       if (!existingItem) {
         userWishlist.push({
-          id: product.id,
+          id: productId,
           name: product.name,
           price: product.price,
           image: product.image || product.img,
@@ -65,14 +66,13 @@ export const addToWishlist = async (product, userEmail) => {
       
       return { success: true, message: result.message, count: result.count };
     } else {
-      console.log('Utils: Add API returned success:false, using localStorage fallback');
-      // Fallback to localStorage
+
       const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
-      const existingItem = userWishlist.find(item => item.id === product.id);
+      const existingItem = userWishlist.find(item => item.id === productId);
       
       if (!existingItem) {
         userWishlist.push({
-          id: product.id,
+          id: productId,
           name: product.name,
           price: product.price,
           image: product.image || product.img,
@@ -85,20 +85,21 @@ export const addToWishlist = async (product, userEmail) => {
       
       return { 
         success: true, 
-        message: 'Added to wishlist (local storage fallback)',
+        message: 'Added to wishlist',
         count: userWishlist.length 
       };
     }
   } catch (error) {
-    console.error('Add to wishlist API error, using localStorage:', error);
+    console.error('Add to wishlist error:', error);
     
-    // Fallback to localStorage
+   
+    const productId = typeof product.id === 'string' ? parseInt(product.id, 10) : product.id;
     const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
-    const existingItem = userWishlist.find(item => item.id === product.id);
+    const existingItem = userWishlist.find(item => item.id === productId);
     
     if (!existingItem) {
       userWishlist.push({
-        id: product.id,
+        id: productId,
         name: product.name,
         price: product.price,
         image: product.image || product.img,
@@ -111,19 +112,17 @@ export const addToWishlist = async (product, userEmail) => {
     
     return { 
       success: true, 
-      message: 'Added to wishlist (local storage)',
+      message: 'Added to wishlist',
       count: userWishlist.length 
     };
   }
 };
 
 
-// Remove from wishlist - FIXED VERSION
 export const removeFromWishlist = async (productId, userEmail) => {
   try {
-    console.log('📡 Utils: Sending DELETE request to API...');
-    console.log('Utils: Product ID:', productId);
-    console.log('Utils: User email:', userEmail);
+
+    const numericProductId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
     
     const response = await fetch('/api/wishlist', {
       method: 'DELETE',
@@ -132,114 +131,96 @@ export const removeFromWishlist = async (productId, userEmail) => {
       },
       body: JSON.stringify({
         userEmail: userEmail,
-        productId: productId
+        productId: numericProductId
       }),
     });
-
-    console.log('Utils: API response status:', response.status);
     
     if (!response.ok) {
-      console.log('Utils: HTTP error during remove, using localStorage fallback. Status:', response.status);
-      // Don't throw error, just use localStorage fallback
+   
       const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
       const updatedWishlist = userWishlist.filter(item => item.id !== productId);
       localStorage.setItem(`wishlist_${userEmail}`, JSON.stringify(updatedWishlist));
       
       return { 
         success: true, 
-        message: 'Removed from wishlist (local storage fallback)',
+        message: 'Removed from wishlist',
         count: updatedWishlist.length 
       };
     }
     
     const result = await response.json();
-    console.log('Utils: API response data:', result);
     
     if (result.success) {
-      // Also update localStorage
+   
       const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
       const updatedWishlist = userWishlist.filter(item => item.id !== productId);
       localStorage.setItem(`wishlist_${userEmail}`, JSON.stringify(updatedWishlist));
-      
-      console.log('Utils: Updated localStorage, new count:', updatedWishlist.length);
       
       return { 
         success: true, 
         message: result.message, 
-        count: result.count 
+        count: result.count
       };
     } else {
-      console.log('Utils: API returned success:false, using localStorage fallback');
-      // Don't throw error, just use localStorage fallback
+
       const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
       const updatedWishlist = userWishlist.filter(item => item.id !== productId);
       localStorage.setItem(`wishlist_${userEmail}`, JSON.stringify(updatedWishlist));
       
       return { 
         success: true, 
-        message: 'Removed from wishlist (local storage fallback)',
+        message: 'Removed from wishlist',
         count: updatedWishlist.length 
       };
     }
   } catch (error) {
-    console.error('Utils: Remove from wishlist API error, using localStorage:', error);
+    console.error('Remove from wishlist error:', error);
     
-    // Fallback to localStorage
+ 
     const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
     const updatedWishlist = userWishlist.filter(item => item.id !== productId);
     localStorage.setItem(`wishlist_${userEmail}`, JSON.stringify(updatedWishlist));
     
-    console.log('Utils: Fallback to localStorage, new count:', updatedWishlist.length);
-    
     return { 
       success: true, 
-      message: 'Removed from wishlist (local storage)',
+      message: 'Removed from wishlist',
       count: updatedWishlist.length 
     };
   }
 };
 
-// Get user wishlist - FIXED VERSION
+
 export const getUserWishlist = async (userEmail) => {
   try {
-    console.log('Utils: Fetching wishlist for:', userEmail);
     const response = await fetch(`${API_BASE}?userEmail=${encodeURIComponent(userEmail)}`);
     
-    console.log('Utils: Response status:', response.status);
-    
     if (!response.ok) {
-      console.log('Utils: HTTP error, using localStorage fallback. Status:', response.status);
- 
       return JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
     }
     
     const result = await response.json();
-    console.log('Utils: Get wishlist API response:', result);
     
     if (result.success) {
       return result.data || [];
     } else {
-      console.log('Utils: API returned success:false, using localStorage fallback');
-    
       return JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
     }
   } catch (error) {
-    console.error('Utils: Get wishlist API error, using localStorage:', error);
-    
-    // Fallback to localStorage
+    console.error('Get wishlist error:', error);
     return JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
   }
 };
 
-// Check if item is in wishlist - Updated
+
 export const checkWishlistItem = async (userEmail, productId) => {
   try {
+    const numericProductId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
+    
     const response = await fetch(
-      `${API_BASE}?userEmail=${encodeURIComponent(userEmail)}&productId=${productId}`
+      `${API_BASE}?userEmail=${encodeURIComponent(userEmail)}&productId=${numericProductId}`
     );
     
     if (!response.ok) {
-      console.log('Utils: Check wishlist HTTP error, using localStorage fallback');
       const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
       return userWishlist.some(item => item.id === productId);
     }
@@ -249,18 +230,16 @@ export const checkWishlistItem = async (userEmail, productId) => {
     if (result.success) {
       return result.inWishlist;
     } else {
-      console.log('Utils: Check wishlist API returned success:false, using localStorage fallback');
       const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
       return userWishlist.some(item => item.id === productId);
     }
   } catch (error) {
-    console.error('Check wishlist API error, using localStorage:', error);
+    console.error('Check wishlist error:', error);
     const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
     return userWishlist.some(item => item.id === productId);
   }
 };
 
-// Get wishlist count - Updated
 export const getWishlistCount = async (userEmail) => {
   try {
     const response = await fetch(
@@ -268,7 +247,6 @@ export const getWishlistCount = async (userEmail) => {
     );
     
     if (!response.ok) {
-      console.log('Utils: Get count HTTP error, using localStorage fallback');
       const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
       return userWishlist.length;
     }
@@ -278,38 +256,37 @@ export const getWishlistCount = async (userEmail) => {
     if (result.success) {
       return result.count;
     } else {
-      console.log('Utils: Get count API returned success:false, using localStorage fallback');
       const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
       return userWishlist.length;
     }
   } catch (error) {
-    console.error('Get wishlist count API error, using localStorage:', error);
+    console.error('Get wishlist count error:', error);
     const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
     return userWishlist.length;
   }
 };
 
-// Sync local wishlist to server - FIXED VERSION
+
 export const syncWishlistToServer = async (userEmail) => {
   try {
     const localWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
     
     if (localWishlist.length === 0) {
-      return true; // Nothing to sync
+      return true;
     }
 
-    // Get server wishlist first
+
     const serverWishlist = await getUserWishlist(userEmail);
     const serverProductIds = new Set(serverWishlist.map(item => item.id));
 
-    // Add local items that don't exist on server
+ 
     let syncSuccess = true;
     for (const item of localWishlist) {
       if (!serverProductIds.has(item.id)) {
         try {
           await addToWishlist(item, userEmail);
         } catch (error) {
-          console.error(`Utils: Failed to sync item ${item.id}:`, error);
+          console.error(`Failed to sync item ${item.id}:`, error);
           syncSuccess = false;
         }
       }

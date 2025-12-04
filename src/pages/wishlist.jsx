@@ -26,7 +26,6 @@ export default function Wishlist() {
       setUser(storedUser);
       loadUserData(storedUser);
     } else {
-      // Redirect to login if not authenticated
       router.push("/login");
     }
   }, [router]);
@@ -35,7 +34,6 @@ export default function Wishlist() {
     try {
       setLoading(true);
       
-      // Load cart count
       try {
         const userCart = JSON.parse(localStorage.getItem(`cart_${userEmail}`)) || [];
         setCartCount(userCart.length);
@@ -43,7 +41,6 @@ export default function Wishlist() {
         setCartCount(0);
       }
       
-      // Try to load wishlist from localStorage first as fallback
       let localWishlist = [];
       try {
         localWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
@@ -51,18 +48,14 @@ export default function Wishlist() {
         localWishlist = [];
       }
       
-      // Try to sync with server
       try {
         await syncWishlistToServer(userEmail);
       } catch (syncError) {
-        // Silently fail sync
       }
       
-      // Load wishlist from API
       try {
         const wishlistData = await getUserWishlist(userEmail);
         
-        // If API returned empty but we have local data, use local data
         if (wishlistData.length === 0 && localWishlist.length > 0) {
           setWishlistItems(localWishlist);
           setWishlistCount(localWishlist.length);
@@ -76,7 +69,6 @@ export default function Wishlist() {
       }
       
     } catch (error) {
-      // Final fallback - use localStorage only
       try {
         const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${userEmail}`)) || [];
         setWishlistItems(userWishlist);
@@ -95,7 +87,9 @@ export default function Wishlist() {
   };
 
   const handleRemoveFromWishlist = async (productId) => {
-    if (!user) return;
+    if (!user) {
+      return;
+    }
     
     try {
       const result = await removeFromWishlist(productId, user);
@@ -109,7 +103,6 @@ export default function Wishlist() {
         alert("Failed to remove item from wishlist. Please try again.");
       }
     } catch (error) {
-      // Fallback: Remove from UI even if API fails
       const updatedWishlist = wishlistItems.filter(item => item.id !== productId);
       setWishlistItems(updatedWishlist);
       setWishlistCount(updatedWishlist.length);
@@ -121,7 +114,6 @@ export default function Wishlist() {
     if (!user) return;
     
     try {
-      // Add to cart
       const userCart = JSON.parse(localStorage.getItem(`cart_${user}`)) || [];
       const existingItemIndex = userCart.findIndex(item => item.id === product.id);
       
@@ -138,7 +130,6 @@ export default function Wishlist() {
       localStorage.setItem(`cart_${user}`, JSON.stringify(userCart));
       setCartCount(userCart.length);
       
-      // Remove from wishlist
       await handleRemoveFromWishlist(product.id);
       
       alert("Product moved to cart!");
@@ -148,13 +139,11 @@ export default function Wishlist() {
   };
 
   const handleSizeChange = (productId, newSize) => {
-    // Update size in local state
     const updatedWishlist = wishlistItems.map(item => 
       item.id === productId ? { ...item, size: newSize } : item
     );
     setWishlistItems(updatedWishlist);
     
-    // Update localStorage
     localStorage.setItem(`wishlist_${user}`, JSON.stringify(updatedWishlist));
   };
 
@@ -165,21 +154,17 @@ export default function Wishlist() {
     if (!confirmClear) return;
     
     try {
-      // Remove all items one by one
       for (const product of wishlistItems) {
         try {
           await removeFromWishlist(product.id, user);
         } catch (error) {
-          // Continue with other items
         }
       }
       
-      // Clear local state immediately
       setWishlistItems([]);
       setWishlistCount(0);
       alert("Wishlist cleared!");
     } catch (error) {
-      // Still clear the UI even if there are errors
       setWishlistItems([]);
       setWishlistCount(0);
       alert("Wishlist cleared!");
@@ -214,7 +199,6 @@ export default function Wishlist() {
 
   return (
     <div className={styles.pageContainer}>
-      {/* Minimal Header with only Logo and Cart */}
       <div className={styles.simpleHeader}>
         <div className={styles.logo} onClick={() => router.push("/")}>
           StreetKicks
@@ -228,13 +212,12 @@ export default function Wishlist() {
         </button>
       </div>
 
-      {/* Page Title */}
       <div className={styles.pageTitle}>
         <h1>My Wishlist</h1>
         <div className={styles.itemCount}>{wishlistCount} items</div>
+      
       </div>
 
-      {/* Wishlist Actions */}
       {wishlistItems.length > 0 && (
         <div className={styles.wishlistActions}>
           <button 
@@ -252,7 +235,6 @@ export default function Wishlist() {
         </div>
       )}
 
-      {/* Wishlist Content */}
       {wishlistItems.length === 0 ? (
         <div className={styles.emptyWishlist}>
           <div className={styles.emptyIcon}>♡</div>
@@ -289,6 +271,7 @@ export default function Wishlist() {
                   {product.description && (
                     <p className={styles.description}>{product.description}</p>
                   )}
+                  <small style={{color: '#666'}}>ID: {product.id}</small>
                 </Link>
                 
                 <select 

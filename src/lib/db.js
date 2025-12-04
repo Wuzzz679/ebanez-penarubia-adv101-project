@@ -9,14 +9,11 @@ const dbConfig = {
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  reconnect: true,
-  acquireTimeout: 60000,
-  timeout: 60000,
-  maxIdle: 10,
-  idleTimeout: 60000,
+  connectTimeout: 10000,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0,
+  idleTimeoutMillis: 60000,
 };
-
-
 const db = mysql.createPool(dbConfig);
 
 db.getConnection()
@@ -35,12 +32,12 @@ db.getConnection()
     console.error('   3. Username and password are correct');
   });
 
-
 export async function query(sql, params = []) {
   let connection;
   try {
     connection = await db.getConnection();
     console.log('📊 Executing query:', sql.substring(0, 100) + '...');
+    console.log('📊 Query params:', params);
     const [results] = await connection.execute(sql, params);
     return results;
   } catch (error) {
@@ -48,8 +45,8 @@ export async function query(sql, params = []) {
     console.error('   Query:', sql);
     console.error('   Params:', params);
     console.error('   Error:', error.message);
+    console.error('   Error code:', error.code);
     
-  
     if (error.code === 'ER_NO_SUCH_TABLE') {
       throw new Error(`Database table doesn't exist. Please run the SQL setup script.`);
     } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
@@ -66,7 +63,6 @@ export async function query(sql, params = []) {
   }
 }
 
-
 export async function execute(sql, params = []) {
   let connection;
   try {
@@ -80,7 +76,6 @@ export async function execute(sql, params = []) {
     console.error('   Params:', params);
     console.error('   Error:', error.message);
     
-
     if (error.code === 'ER_NO_SUCH_TABLE') {
       throw new Error(`Database table doesn't exist. Please run the SQL setup script.`);
     } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
@@ -123,7 +118,6 @@ export const reviewQueries = {
         [productId]
       );
 
-   
       if (reviews.length > 0) {
         const reviewIds = reviews.map(r => r.id);
         const replies = await query(
@@ -134,7 +128,6 @@ export const reviewQueries = {
           [reviewIds]
         );
 
-      
         return reviews.map(review => ({
           ...review,
           replies: replies.filter(reply => reply.review_id === review.id)
@@ -147,7 +140,6 @@ export const reviewQueries = {
       throw error;
     }
   },
-
 
   getAllReviews: (rating = null) => {
     let sql = `
@@ -168,13 +160,11 @@ export const reviewQueries = {
     return query(sql, params);
   },
 
-
   checkExistingReview: (productId, userEmail) =>
     query(
       'SELECT id FROM reviews WHERE product_id = ? AND user_email = ?',
       [productId, userEmail]
     ),
-
 
   submitReview: (reviewData) =>
     query(
@@ -191,7 +181,6 @@ export const reviewQueries = {
       ]
     ),
 
- 
   getReviewById: (reviewId) =>
     query(
       `SELECT r.*, u.username as user_name 
@@ -201,7 +190,6 @@ export const reviewQueries = {
       [reviewId]
     ),
 
-
   checkUserPurchase: (userEmail, productId) =>
     query(
       `SELECT id FROM orders 
@@ -210,7 +198,6 @@ export const reviewQueries = {
       [userEmail, productId]
     ),
 
-  
   getReviewReplies: (reviewId) =>
     query(
       `SELECT rr.*, u.username as user_name 
@@ -255,66 +242,132 @@ export const reviewQueries = {
     )
 };
 
-
+// WISHLIST QUERIES - FIXED VERSION
 export const wishlistQueries = {
-  getUserWishlist: (userEmail) => 
-    query(
-      `SELECT w.*, p.name, p.slug, p.price, p.description, p.image as image 
-       FROM wishlist w 
-       JOIN products p ON w.product_id = p.id 
-       WHERE w.user_email = ? 
-       ORDER BY w.created_at DESC`,
-      [userEmail]
-    ),
+  // FIXED: Returns product_id as the main id field
+  getUserWishlist: async (userEmail) => {
+    try {
+      const result = await query(
+        `SELECT 
+          w.product_id as id,  -- Use product_id as the main id field
+          w.user_email,
+          w.created_at as added_at,
+          p.name, 
+          p.slug, 
+          p.price, 
+          p.description, 
+          p.image_url as image 
+         FROM wishlist w 
+         JOIN products p ON w.product_id = p.id 
+         WHERE w.user_email = ? 
+         ORDER BY w.created_at DESC`,
+        [userEmail]
+      );
+      
+      console.log('📋 DB: getUserWishlist result:', result);
+      return result || [];
+    } catch (error) {
+      console.error('Error getting user wishlist:', error);
+      return [];
+    }
+  },
 
-  checkWishlistItem: (userEmail, productId) =>
-    query(
-      'SELECT id FROM wishlist WHERE user_email = ? AND product_id = ?',
-      [userEmail, productId]
-    ),
+  checkWishlistItem: async (userEmail, productId) => {
+    try {
+      // Convert productId to number
+      const numericProductId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
+      
+      const result = await query(
+        'SELECT id FROM wishlist WHERE user_email = ? AND product_id = ?',
+        [userEmail, numericProductId]
+      );
+      return result || [];
+    } catch (error) {
+      console.error('Error checking wishlist item:', error);
+      return [];
+    }
+  },
 
-  addToWishlist: (userEmail, productId) =>
-    query(
-      'INSERT INTO wishlist (user_email, product_id) VALUES (?, ?)',
-      [userEmail, productId]
-    ),
+  addToWishlist: async (userEmail, productId) => {
+    try {
+      // Convert productId to number if needed
+      const numericProductId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
+      
+      console.log('➕ DB: Adding to wishlist:', { userEmail, productId: numericProductId });
+      
+      const result = await query(
+        'INSERT INTO wishlist (user_email, product_id) VALUES (?, ?)',
+        [userEmail, numericProductId]
+      );
+      
+      console.log('✅ DB: Add to wishlist result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error adding to wishlist:', error);
+      throw error;
+    }
+  },
 
   removeFromWishlist: async (userEmail, productId) => {
     try {
       console.log('🗑️ DB: Executing DELETE query for:', { userEmail, productId });
       
-      const [result] = await query(
+      // Convert to number if needed
+      const numericProductId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
+      
+      const result = await query(
         'DELETE FROM wishlist WHERE user_email = ? AND product_id = ?',
-        [userEmail, productId]
+        [userEmail, numericProductId]
       );
       
       console.log('✅ DB: Delete result:', result);
-      console.log('✅ DB: Affected rows:', result.affectedRows);
+      console.log('✅ DB: Affected rows:', result?.affectedRows || 0);
       
       return result;
     } catch (error) {
       console.error('❌ DB: Remove error:', error);
-      throw error;
+      // Return empty result instead of throwing for non-existent items
+      return { affectedRows: 0 };
     }
   },
 
-  getWishlistCount: (userEmail) =>
-    query(
-      'SELECT COUNT(*) as count FROM wishlist WHERE user_email = ?',
-      [userEmail]
-    ),
+  getWishlistCount: async (userEmail) => {
+    try {
+      const result = await query(
+        'SELECT COUNT(*) as count FROM wishlist WHERE user_email = ?',
+        [userEmail]
+      );
+      
+      // query() returns an array, we need the first element
+      if (Array.isArray(result) && result.length > 0) {
+        return result[0];
+      }
+      return result || { count: 0 };
+    } catch (error) {
+      console.error('Error getting wishlist count:', error);
+      return { count: 0 };
+    }
+  },
 
-  isInWishlist: (userEmail, productId) =>
-    query(
-      'SELECT id FROM wishlist WHERE user_email = ? AND product_id = ?',
-      [userEmail, productId]
-    )
+  isInWishlist: async (userEmail, productId) => {
+    try {
+      // Convert productId to number
+      const numericProductId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
+      
+      const result = await query(
+        'SELECT id FROM wishlist WHERE user_email = ? AND product_id = ?',
+        [userEmail, numericProductId]
+      );
+      return result || [];
+    } catch (error) {
+      console.error('Error checking if in wishlist:', error);
+      return [];
+    }
+  }
 };
-
 
 export async function initializeDatabase() {
   try {
-
     const tables = await query(`
       SELECT TABLE_NAME 
       FROM information_schema.tables 
@@ -341,12 +394,10 @@ export async function initializeDatabase() {
   }
 }
 
-
 export async function createMissingTables() {
   try {
     console.log('🔄 Checking for missing tables...');
     
- 
     const createReviewRepliesTable = `
       CREATE TABLE IF NOT EXISTS review_replies (
         id INT(11) PRIMARY KEY AUTO_INCREMENT,
@@ -370,11 +421,9 @@ export async function createMissingTables() {
   }
 }
 
-
 export async function checkDatabaseHealth() {
   try {
     await query('SELECT 1');
-    
 
     const tables = await query(`
       SELECT TABLE_NAME 
@@ -396,7 +445,6 @@ export async function checkDatabaseHealth() {
     };
   }
 }
-
 
 initializeDatabase().then(initialized => {
   if (!initialized) {

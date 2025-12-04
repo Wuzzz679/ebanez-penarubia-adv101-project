@@ -100,7 +100,6 @@ export default function ShoePage() {
     }
   }, []);
 
-  // Load reviews when shoe is loaded
   useEffect(() => {
     if (slug) {
       const shoe = shoesData.find((s) => s.slug === slug);
@@ -119,12 +118,10 @@ export default function ShoePage() {
       if (data.success) {
         setReviews(data.reviews);
         
-        // Check if current user has a review
         if (user) {
           const existingUserReview = data.reviews.find(review => review.user_email === user);
           setUserReview(existingUserReview);
           
-          // If user has a review, pre-fill the form
           if (existingUserReview) {
             setReviewForm({
               rating: existingUserReview.rating,
@@ -135,7 +132,6 @@ export default function ShoePage() {
           }
         }
         
-        // Calculate average rating
         if (data.reviews.length > 0) {
           const avg = data.reviews.reduce((sum, review) => sum + review.rating, 0) / data.reviews.length;
           setReviewStats({
@@ -197,7 +193,6 @@ export default function ShoePage() {
       if (data.success) {
         alert(data.isUpdate ? '✓ Review updated successfully!' : '✓ Review submitted successfully!');
         
-        // Don't reset form if it was an update
         if (!data.isUpdate) {
           setReviewForm({
             rating: 5,
@@ -207,7 +202,6 @@ export default function ShoePage() {
           });
         }
         
-        // Refresh reviews
         fetchReviews(shoe.id);
       } else {
         alert('Error: ' + data.message);
@@ -285,7 +279,7 @@ export default function ShoePage() {
     alert(`Added ${item.title} (Size ${item.size}) to your cart`);
   };
 
-  const handleAddToWishlist = () => {
+  const handleAddToWishlist = async () => {
     if (!user) {
       alert("Please login to add items to wishlist");
       return;
@@ -300,15 +294,27 @@ export default function ShoePage() {
       description: shoe.description
     };
 
-    const success = addToWishlist(productData, user);
-    if (success) {
-      const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${user}`)) || [];
-      setWishlistCount(userWishlist.length);
+    try {
+      const result = await addToWishlist(productData, user);
       
-      const goToWishlist = confirm("Item added to wishlist! Do you want to view your wishlist?");
-      if (goToWishlist) {
-        router.push("/wishlist");
+      if (result && result.success) {
+        setWishlistCount(result.count || 0);
+        
+        const userWishlist = JSON.parse(localStorage.getItem(`wishlist_${user}`)) || [];
+        const existingItem = userWishlist.find(item => item.id === shoe.id);
+        if (!existingItem) {
+          userWishlist.push(productData);
+          localStorage.setItem(`wishlist_${user}`, JSON.stringify(userWishlist));
+        }
+        
+     alert("✓ Item added to wishlist!");
+
+      } else {
+        alert("Failed to add to wishlist: " + (result?.message || 'Unknown error'));
       }
+    } catch (error) {
+      console.error('Error adding to wishlist:', error);
+      alert("Error adding to wishlist. Please try again.");
     }
   };
 
@@ -358,8 +364,8 @@ export default function ShoePage() {
           <h2>{shoe.name}</h2>
           <p className={styles.price}>{shoe.price}</p>
           <p className={styles.description}>{shoe.description}</p>
+         
 
-          {/* Review Summary */}
           <div className={styles.reviewSummary}>
             <div className={styles.reviewRating}>
               <span className={styles.averageRating}>{reviewStats.averageRating}</span>
@@ -394,25 +400,22 @@ export default function ShoePage() {
               ♡ Add to Wishlist
             </button>
           </div>
-             <Link href={`/reviews?productId=${shoe.id}`} legacyBehavior>
-                <a className={styles.viewReviewsLink}>
-                  ✍️ View/Write Reviews
-                </a>
-             </Link>
+          <Link href={`/reviews?productId=${shoe.id}`} legacyBehavior>
+            <a className={styles.viewReviewsLink}>
+              ✍️ View/Write Reviews
+            </a>
+          </Link>
         </div>
       </main>
 
-      {/* Reviews Section */}
       {showReviews && (
         <section className={styles.reviewsSection}>
           <h3>Customer Reviews</h3>
           
-          {/* Review Form */}
           {user && (
             <div className={styles.reviewForm}>
               <h4>Write a Review</h4>
               
-              {/* User Review Notice */}
               {userReview && (
                 <div className={styles.userReviewNotice}>
                   <div className={styles.noticeHeader}>
@@ -498,7 +501,6 @@ export default function ShoePage() {
             </div>
           )}
           
-          {/* Reviews List */}
           <div className={styles.reviewsList}>
             {loadingReviews ? (
               <p>Loading reviews...</p>
@@ -551,7 +553,6 @@ export default function ShoePage() {
                               comment: review.comment,
                               verified_purchase: review.verified_purchase
                             });
-                            // Scroll to form
                             document.querySelector(`.${styles.reviewForm}`)?.scrollIntoView({ 
                               behavior: 'smooth' 
                             });
