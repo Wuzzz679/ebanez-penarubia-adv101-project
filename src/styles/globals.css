@@ -1,3 +1,4 @@
+/* /styles/global.css */
 @keyframes gradientBG {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -103,6 +104,7 @@ body {
   from { opacity: 0; transform: translateY(-15px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
 .logoText {
   font-size: 3.5rem;
   font-weight: 900;
@@ -114,10 +116,54 @@ body {
   animation: neonGlow 1.5s ease-in-out infinite alternate;
 }
 
-
-
 .card h2 {
   font-size: 1.8rem;
   margin-bottom: 1.5rem;
   color: #fff;
+}
+
+/* ADD THESE NEW STYLES FOR PASSWORD REQUIREMENTS */
+.password-requirements {
+  margin-top: 10px;
+  font-size: 0.85rem;
+}
+
+.password-requirements p {
+  margin-bottom: 5px;
+  color: #ccc;
+}
+
+.password-requirements ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.password-requirements li {
+  color: #666;
+  transition: color 0.3s;
+}
+
+.password-requirements li.met {
+  color: #00f5d4;
+}
+
+.error-message {
+  color: #ff4d4d;
+  font-weight: 700;
+  margin-top: 1rem;
+}
+
+.toggle-text {
+  margin-top: 1rem;
+  color: #ccc;
+}
+
+@keyframes neonGlow {
+  from {
+    text-shadow: 0 0 15px #00f5d4, 0 0 25px #ff6584;
+  }
+  to {
+    text-shadow: 0 0 20px #00f5d4, 0 0 30px #ff6584, 0 0 40px #ff6584;
+  }
 }

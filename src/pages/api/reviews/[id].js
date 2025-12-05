@@ -1,5 +1,4 @@
-// pages/api/reviews/[id].js
-import { query } from '../../../lib/db.js';  // Fixed import
+import { query } from '../../../lib/db.js';  
 
 export default async function handler(req, res) {
   const { method } = req;
@@ -37,7 +36,7 @@ async function updateReview(req, res, id) {
   try {
     const { rating, title, comment, verified_purchase } = req.body;
     
-    // Validation
+
     if (rating && (rating < 1 || rating > 5)) {
       return res.status(400).json({ 
         success: false, 

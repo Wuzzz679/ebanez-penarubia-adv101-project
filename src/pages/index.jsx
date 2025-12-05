@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/router";
+import styles from "../styles/auth.module.css"; 
 
 export default function AuthPage() {
   const router = useRouter();
@@ -9,10 +10,12 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     const endpoint = isRegister ? "/api/register" : "/api/login";
     const bodyData = isRegister ? { username, email, password } : { email, password };
@@ -35,22 +38,37 @@ export default function AuthPage() {
         setPassword("");
       } else {
         localStorage.setItem("token", data.token);
-        localStorage.setItem("user", data.email); // Store email for database operations
-        localStorage.setItem("username", data.username); // Store actual username for display
+        localStorage.setItem("user", data.email);
+        localStorage.setItem("username", data.username);
         router.push("/home");
       }
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <div className="app">
-      <div className="card">
-        <h1 className="logoText">StreetKicks</h1>
-        <h2>{isRegister ? "Register" : "Login"}</h2>
+  // Check password strength
+  const checkPasswordStrength = (pass) => {
+    const checks = {
+      length: pass.length >= 6,
+      uppercase: /[A-Z]/.test(pass),
+      lowercase: /[a-z]/.test(pass),
+      number: /\d/.test(pass)
+    };
+    return checks;
+  };
 
-        <form onSubmit={handleSubmit}>
+  const passwordChecks = checkPasswordStrength(password);
+
+  return (
+    <div className={styles.authContainer}>
+      <div className={styles.authCard}>
+        <h1 className={styles.logoText}>StreetKicks</h1>
+        <h2>{isRegister ? "Create Account" : "Welcome Back"}</h2>
+
+        <form className={styles.authForm} onSubmit={handleSubmit}>
           {isRegister && (
             <input
               type="text"
@@ -67,23 +85,58 @@ export default function AuthPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <button type="submit" className="btn-gradient">
-            {isRegister ? "Register" : "Login"}
+          <div>
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            {/* Show password requirements only on register */}
+            {isRegister && (
+              <div className={styles.passwordRequirements}>
+                <p>Password must have:</p>
+                <ul>
+                  <li className={passwordChecks.length ? styles.met : ""}>
+                    At least 6 characters
+                  </li>
+                  <li className={passwordChecks.uppercase ? styles.met : ""}>
+                    One uppercase letter
+                  </li>
+                  <li className={passwordChecks.lowercase ? styles.met : ""}>
+                    One lowercase letter
+                  </li>
+                  <li className={passwordChecks.number ? styles.met : ""}>
+                    One number
+                  </li>
+                </ul>
+              </div>
+            )}
+          </div>
+          <button 
+            type="submit" 
+            className={`${styles.authButton} ${loading ? styles.submitting : ""}`}
+            disabled={loading}
+          >
+            {loading ? "Processing..." : (isRegister ? "Create Account" : "Login")}
           </button>
         </form>
 
-        {error && <p style={{ color: "#ff4d4d", fontWeight: "700" }}>{error}</p>}
+        {error && <p className={styles.errorMessage}>{error}</p>}
 
-        <p style={{ marginTop: "1rem" }}>
+        <p className={styles.toggleText}>
           {isRegister ? "Already have an account?" : "Don't have an account?"}{" "}
-          <span className="link" onClick={() => setIsRegister(!isRegister)}>
+          <span 
+            className={styles.link} 
+            onClick={() => {
+              setIsRegister(!isRegister);
+              setError("");
+              setUsername("");
+              setEmail("");
+              setPassword("");
+            }}
+          >
             {isRegister ? "Login" : "Register"}
           </span>
         </p>

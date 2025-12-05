@@ -200,7 +200,7 @@ export default function Wishlist() {
   return (
     <div className={styles.pageContainer}>
       <div className={styles.simpleHeader}>
-        <div className={styles.logo} onClick={() => router.push("/")}>
+        <div className={styles.logo} onClick={() => router.push("/home")}>
           StreetKicks
         </div>
         
@@ -242,7 +242,7 @@ export default function Wishlist() {
           <p>Start adding your favorite sneakers to your wishlist!</p>
           <button 
             className={styles.shopNowBtn}
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/home")}
           >
             Shop Now
           </button>
