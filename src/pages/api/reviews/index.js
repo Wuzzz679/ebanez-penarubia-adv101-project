@@ -1,4 +1,4 @@
-// pages/api/reviews/index.js
+
 import { query } from '../../../lib/db.js';
 
 export default async function handler(req, res) {
@@ -34,7 +34,7 @@ async function getReviews(req, res) {
       [productId]
     );
     
-    // Calculate average rating
+   
     let averageRating = 0;
     if (reviews.length > 0) {
       const sum = reviews.reduce((total, review) => total + review.rating, 0);
@@ -63,7 +63,7 @@ async function createOrUpdateReview(req, res) {
   try {
     const { product_id, user_email, rating, title, comment, verified_purchase } = req.body;
     
-    // Validation
+
     if (!product_id || !user_email || !rating || !title) {
       return res.status(400).json({ 
         success: false, 
@@ -77,8 +77,7 @@ async function createOrUpdateReview(req, res) {
         message: 'Rating must be between 1 and 5' 
       });
     }
-    
-    // Check if user already reviewed this product
+
     const existingReviews = await query(
       'SELECT id FROM reviews WHERE product_id = ? AND user_email = ?',
       [product_id, user_email]
@@ -88,7 +87,7 @@ async function createOrUpdateReview(req, res) {
     let isUpdate = false;
     
     if (existingReviews.length > 0) {
-      // UPDATE existing review
+    
       reviewId = existingReviews[0].id;
       isUpdate = true;
       
@@ -99,7 +98,7 @@ async function createOrUpdateReview(req, res) {
         [rating, title, comment, verified_purchase || false, reviewId]
       );
     } else {
-      // CREATE new review
+
       const result = await query(
         `INSERT INTO reviews 
          (product_id, user_email, rating, title, comment, verified_purchase) 
@@ -109,7 +108,7 @@ async function createOrUpdateReview(req, res) {
       reviewId = result.insertId;
     }
     
-    // Get the updated/new review
+ 
     const [review] = await query(
       'SELECT * FROM reviews WHERE id = ?',
       [reviewId]
