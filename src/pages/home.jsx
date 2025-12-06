@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import styles from "../styles/home.module.css";
 import Link from "next/link";
-import { addToWishlist } from "../utils/wishlistUtils";
 
 export default function Home() {
   const router = useRouter();
@@ -16,8 +15,6 @@ export default function Home() {
       name: "Nike Dunk Low", 
       price: 7894, 
       img: "/nike.avif",
-      rating: 4.5,
-      reviewCount: 128
     },
     { 
       id: 2,
@@ -25,8 +22,6 @@ export default function Home() {
       name: "Air Jordan 1 Low", 
       price: 6500, 
       img: "/blurjordan.png",
-      rating: 4.8,
-      reviewCount: 95
     },
     { 
       id: 3,
@@ -34,8 +29,6 @@ export default function Home() {
       name: "Palermo Leather Sneakers Unisex", 
       price: 4576, 
       img: "/palermo.avif",
-      rating: 4.2,
-      reviewCount: 67
     },
     { 
       id: 4,
@@ -43,8 +36,6 @@ export default function Home() {
       name: "Chuck Taylor All Star", 
       price: 3600, 
       img: "/chuck.webp",
-      rating: 4.6,
-      reviewCount: 203
     },
     { 
       id: 5,
@@ -52,8 +43,6 @@ export default function Home() {
       name: "Adizero Evo Sl Men's Shoes", 
       price: 4200, 
       img: "/adizero.webp",
-      rating: 4.3,
-      reviewCount: 54
     },
     { 
       id: 6,
@@ -61,8 +50,6 @@ export default function Home() {
       name: "740 unisex sneakers shoes", 
       price: 4890, 
       img: "/nb.webp",
-      rating: 4.7,
-      reviewCount: 89
     },
     { 
       id: 7,
@@ -70,8 +57,6 @@ export default function Home() {
       name: "Air Jordan 4 Retro Men's Basketball Shoes", 
       price: 5000, 
       img: "/retro.avif",
-      rating: 4.9,
-      reviewCount: 156
     },
   ];
 
@@ -87,6 +72,8 @@ export default function Home() {
   const [cartCount, setCartCount] = useState(0);
   const [user, setUser] = useState(null);
   const [username, setUsername] = useState("");
+  const [shoeRatings, setShoeRatings] = useState({});
+  const [loadingRatings, setLoadingRatings] = useState(true);
 
   useEffect(() => {
     const updateItemsPerPage = () => {
@@ -112,6 +99,48 @@ export default function Home() {
     }
   }, []);
 
+  useEffect(() => {
+    fetchAllShoeRatings();
+  }, []);
+
+  const fetchAllShoeRatings = async () => {
+    try {
+      setLoadingRatings(true);
+      const ratingsData = {};
+      
+      // Fetch ratings for each shoe from database
+      for (const shoe of trendingShoes) {
+        try {
+          const response = await fetch(`/api/reviews?productId=${shoe.id}`);
+          
+          if (response.ok) {
+            const data = await response.json();
+            
+            if (data.success) {
+              ratingsData[shoe.slug] = {
+                averageRating: data.stats.averageRating || 0,
+                reviewCount: data.stats.totalReviews || 0
+              };
+            }
+          }
+        } catch (error) {
+          console.error(`Error fetching ratings for ${shoe.slug}:`, error);
+          // Fallback to 0 if API fails
+          ratingsData[shoe.slug] = {
+            averageRating: 0,
+            reviewCount: 0
+          };
+        }
+      }
+      
+      setShoeRatings(ratingsData);
+    } catch (error) {
+      console.error('Error fetching shoe ratings:', error);
+    } finally {
+      setLoadingRatings(false);
+    }
+  };
+
   const handleNext = () => {
     setCurrentIndex((prev) =>
       prev + itemsPerPage < trendingShoes.length ? prev + itemsPerPage : 0
@@ -133,18 +162,33 @@ export default function Home() {
     router.push("/");
   };
 
-  const renderStars = (rating) => {
+  const renderStars = (shoe) => {
+    const stats = shoeRatings[shoe.slug] || { averageRating: 0, reviewCount: 0 };
+    const rating = stats.averageRating;
+    
+    // If no reviews yet
+    if (stats.reviewCount === 0) {
+      return (
+        <div className={styles.noReviews}>
+          No reviews yet
+        </div>
+      );
+    }
+    
     return (
       <div className={styles.stars}>
         {[1, 2, 3, 4, 5].map((star) => (
           <span
             key={star}
-            className={`${styles.star} ${star <= rating ? styles.filled : ''}`}
+            className={`${styles.star} ${star <= Math.round(rating) ? styles.filled : ''}`}
           >
             ★
           </span>
         ))}
-        <span className={styles.ratingText}>({rating})</span>
+        <span className={styles.ratingText}>
+          ({rating.toFixed(1)})
+          <span className={styles.reviewCount}> • {stats.reviewCount} reviews</span>
+        </span>
       </div>
     );
   };
@@ -210,7 +254,13 @@ export default function Home() {
                   <p className={styles.price}>₱{shoe.price.toLocaleString()}</p>
                   
                   <div className={styles.ratingSection}>
-                    {renderStars(shoe.rating)}
+                    {loadingRatings ? (
+                      <div className={styles.loadingRating}>
+                        Loading ratings...
+                      </div>
+                    ) : (
+                      renderStars(shoe)
+                    )}
                   </div>
                 </div>
               </div>

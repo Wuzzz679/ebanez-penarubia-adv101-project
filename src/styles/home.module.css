@@ -604,3 +604,24 @@
     flex-direction: column;
   }
 }
+.loadingRating {
+  font-size: 0.9rem;
+  color: #666;
+  text-align: center;
+  padding: 8px 0;
+  font-style: italic;
+}
+
+.noReviews {
+  font-size: 0.9rem;
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  padding: 5px 0;
+}
+
+.reviewCount {
+  font-size: 0.8rem;
+  color: #666;
+  margin-left: 5px;
+}
